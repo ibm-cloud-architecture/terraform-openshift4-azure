@@ -1,0 +1,22 @@
+#  Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files
+*.tfvars
+
+# Mac stuff
+.DS_Store
+
+# openshift pull-secret
+pull-secret
+
+# local
+makefile
+**/artifacts/*
+
+# installer-files
+**/installer-files/*
