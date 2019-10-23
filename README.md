@@ -96,10 +96,10 @@ azure_rhcos_image_id          = "/resourceGroups/rhcos_images/providers/Microsof
 3. Deploy with terraform
 
 4. ```bash
-   terraform init
-   terraform plan
-   terraform apply
-   terraform destroy -target=module.bootstrap
+   $ terraform init
+   $ terraform plan
+   $ terraform apply
+   $ terraform destroy -target=module.bootstrap
    ```
 
 4.  To access your cluster
