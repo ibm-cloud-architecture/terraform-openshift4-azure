@@ -5,12 +5,12 @@ resource "null_resource" "dependency" {
 }
 
 locals {
-  installer_workspace =  "${path.root}/installer-files"
+  installer_workspace = "${path.root}/installer-files"
 }
 
 resource "null_resource" "download_binaries" {
   provisioner "local-exec" {
-    when = "create"
+    when    = "create"
     command = <<EOF
 mkdir ${local.installer_workspace}
 case $(uname -s) in
@@ -37,12 +37,12 @@ EOF
   }
 
   provisioner "local-exec" {
-    when = "destroy"
+    when    = "destroy"
     command = "rm -rf ${local.installer_workspace}"
   }
 
   depends_on = [
-        "null_resource.dependency",
+    "null_resource.dependency",
   ]
 }
 
@@ -83,7 +83,7 @@ resource "null_resource" "generate_ignition" {
     "local_file.cluster-scheduler-02-config",
   ]
 
-provisioner "local-exec" {
+  provisioner "local-exec" {
     command = <<EOF
 rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-*
 rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-*
@@ -95,37 +95,37 @@ EOF
 }
 
 resource "azurerm_storage_blob" "ignition-bootstrap" {
-  name                   = "bootstrap.ign"
-  source                 = "${local.installer_workspace}/bootstrap.ign"
+  name   = "bootstrap.ign"
+  source = "${local.installer_workspace}/bootstrap.ign"
   # resource_group_name    = "${var.resource_group_name}"
   storage_account_name   = "${var.storage_account_name}"
   storage_container_name = "${var.storage_container_name}"
   type                   = "block"
-  depends_on             = [
+  depends_on = [
     "null_resource.generate_ignition"
   ]
 }
 
 resource "azurerm_storage_blob" "ignition-master" {
-  name                   = "master.ign"
-  source                 = "${local.installer_workspace}/master.ign"
+  name   = "master.ign"
+  source = "${local.installer_workspace}/master.ign"
   # resource_group_name    = "${var.resource_group_name}"
   storage_account_name   = "${var.storage_account_name}"
   storage_container_name = "${var.storage_container_name}"
   type                   = "block"
-  depends_on             = [
+  depends_on = [
     "null_resource.generate_ignition"
   ]
 }
 
 resource "azurerm_storage_blob" "ignition-worker" {
-  name                   = "worker.ign"
-  source                 = "${local.installer_workspace}/worker.ign"
+  name   = "worker.ign"
+  source = "${local.installer_workspace}/worker.ign"
   # resource_group_name    = "${var.resource_group_name}"
   storage_account_name   = "${var.storage_account_name}"
   storage_container_name = "${var.storage_container_name}"
   type                   = "block"
-  depends_on             = [
+  depends_on = [
     "null_resource.generate_ignition"
   ]
 }

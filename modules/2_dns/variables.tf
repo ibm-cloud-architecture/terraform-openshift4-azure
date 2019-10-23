@@ -1,42 +1,42 @@
 variable "cluster_domain" {}
 
 variable "dependson" {
-  type = "list"
+  type    = list(string)
   default = []
 }
 
 variable "apps_external_lb_fqdn" {
-  type = "string"
+  type = string
 }
 
 variable "cluster_external_lb_fqdn" {
-  type = "string"
+  type = string
 }
 
 variable "internal_lb_ipaddress" {
-  type = "string"
+  type = string
 }
 
 variable "resource_group_name" {
-  type = "string"
+  type = string
 }
 
 variable "azure_dns_resource_group_name" {
-  type = "string"
+  type = string
 }
 
 variable "etcd_count" {
-  type = "string"  
+  type = string
 }
 
 variable "etcd_ip_addresses" {
-  type = "list"  
+  type = list(string)
 }
 
 variable "base_domain" {
-  type = "string"
+  type = string
 }
 
 variable "vnet_id" {
-  type = "string"
+  type = string
 }

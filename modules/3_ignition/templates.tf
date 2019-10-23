@@ -33,7 +33,7 @@ EOF
 }
 
 resource "local_file" "install_config_yaml" {
-  content = "${data.template_file.install_config_yaml.rendered}" 
+  content  = "${data.template_file.install_config_yaml.rendered}"
   filename = "${local.installer_workspace}/install-config.yaml"
   depends_on = [
     "null_resource.dependency",
@@ -66,7 +66,7 @@ EOF
 }
 
 resource "local_file" "cluster-infrastructure-02-config" {
-  content = data.template_file.cluster-infrastructure-02-config.rendered
+  content  = data.template_file.cluster-infrastructure-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-infrastructure-02-config.yml"
   depends_on = [
     "null_resource.dependency",
@@ -93,7 +93,7 @@ EOF
 }
 
 resource "local_file" "cluster-dns-02-config" {
-  content = data.template_file.cluster-dns-02-config.rendered
+  content  = data.template_file.cluster-dns-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-dns-02-config.yml"
   depends_on = [
     "null_resource.dependency",
@@ -129,7 +129,7 @@ EOF
 }
 
 resource "local_file" "cloud-provider-config" {
-  content = data.template_file.cloud-provider-config.rendered
+  content  = data.template_file.cloud-provider-config.rendered
   filename = "${local.installer_workspace}/manifests/cloud-provider-config.yaml"
   depends_on = [
     "null_resource.dependency",
@@ -139,7 +139,7 @@ resource "local_file" "cloud-provider-config" {
 }
 
 data "template_file" "etcd-host-service-endpoints-addresses" {
-  count = var.master_count
+  count    = var.master_count
   template = <<EOF
   - ip: ${element(var.etcd_ip_addresses, count.index)}
     hostname: etcd-${count.index}
@@ -166,7 +166,7 @@ EOF
 }
 
 resource "local_file" "etcd-host-service-endpoints" {
-  content = data.template_file.etcd-host-service-endpoints.rendered
+  content  = data.template_file.etcd-host-service-endpoints.rendered
   filename = "${local.installer_workspace}/manifests/etcd-host-service-endpoints.yaml"
   depends_on = [
     "null_resource.dependency",
@@ -176,7 +176,7 @@ resource "local_file" "etcd-host-service-endpoints" {
 }
 
 data "template_file" "openshift-cluster-api_master-machines" {
-  count = var.master_count
+  count    = var.master_count
   template = <<EOF
 apiVersion: machine.openshift.io/v1beta1
 kind: Machine
@@ -232,8 +232,8 @@ EOF
 }
 
 resource "local_file" "openshift-cluster-api_master-machines" {
-  count = var.master_count
-  content = element(data.template_file.openshift-cluster-api_master-machines.*.rendered, count.index)
+  count    = var.master_count
+  content  = element(data.template_file.openshift-cluster-api_master-machines.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-${count.index}.yaml"
   depends_on = [
     "null_resource.dependency",
@@ -243,7 +243,7 @@ resource "local_file" "openshift-cluster-api_master-machines" {
 }
 
 data "template_file" "openshift-cluster-api_worker-machineset" {
-  count = "${var.node_count}"
+  count    = "${var.node_count}"
   template = <<EOF
 apiVersion: machine.openshift.io/v1beta1
 kind: MachineSet
@@ -314,8 +314,8 @@ EOF
 }
 
 resource "local_file" "openshift-cluster-api_worker-machineset" {
-  count = var.node_count
-  content = element(data.template_file.openshift-cluster-api_worker-machineset.*.rendered, count.index)
+  count    = var.node_count
+  content  = element(data.template_file.openshift-cluster-api_worker-machineset.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-${count.index}.yaml"
   depends_on = [
     "null_resource.dependency",
@@ -341,7 +341,7 @@ EOF
 }
 
 resource "local_file" "ingresscontroller-default" {
-  content = data.template_file.ingresscontroller-default.rendered
+  content  = data.template_file.ingresscontroller-default.rendered
   filename = "${local.installer_workspace}/openshift/99_default_ingress_controller.yaml"
   depends_on = [
     "null_resource.dependency",
@@ -397,7 +397,7 @@ EOF
 }
 
 resource "local_file" "cloud-creds-secret-kube-system" {
-  content = data.template_file.cloud-creds-secret-kube-system.rendered
+  content  = data.template_file.cloud-creds-secret-kube-system.rendered
   filename = "${local.installer_workspace}/openshift/99_cloud-creds-secret.yaml"
   depends_on = [
     "null_resource.dependency",
@@ -422,7 +422,7 @@ EOF
 }
 
 resource "local_file" "cluster-scheduler-02-config" {
-  content = data.template_file.cluster-scheduler-02-config.rendered
+  content  = data.template_file.cluster-scheduler-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-scheduler-02-config.yml"
   depends_on = [
     "null_resource.dependency",
@@ -445,7 +445,7 @@ EOF
 }
 
 resource "local_file" "azure-storage-clusterrole" {
-  content = data.template_file.azure-storage-clusterrole.rendered
+  content  = data.template_file.azure-storage-clusterrole.rendered
   filename = "${local.installer_workspace}/openshift/99_azure-storage-clusterrole.yml"
   depends_on = [
     "null_resource.dependency",
@@ -474,7 +474,7 @@ EOF
 }
 
 resource "local_file" "azure-file-storageclass" {
-  content = data.template_file.azure-file-storageclass.rendered
+  content  = data.template_file.azure-file-storageclass.rendered
   filename = "${local.installer_workspace}/openshift/99_azure-file-storageclass.yml"
   depends_on = [
     "null_resource.dependency",
@@ -501,7 +501,7 @@ EOF
 }
 
 resource "local_file" "image-registry-pvc" {
-  content = data.template_file.image-registry-pvc.rendered
+  content  = data.template_file.image-registry-pvc.rendered
   filename = "${local.installer_workspace}/openshift/99_image-registry-pvc.yml"
   depends_on = [
     "null_resource.dependency",

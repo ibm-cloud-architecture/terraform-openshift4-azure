@@ -9,14 +9,14 @@ resource "azurerm_dns_zone" "private" {
   resource_group_name            = "${var.resource_group_name}"
   zone_type                      = "Private"
   resolution_virtual_network_ids = ["${var.vnet_id}"]
-  depends_on          = [
+  depends_on = [
     "null_resource.dependency"
   ]
 }
 
 locals {
   // extracting "api.<clustername>" from <clusterdomain>
-  api_external_name = "api.${replace(var.cluster_domain, ".${var.base_domain}", "")}"
+  api_external_name    = "api.${replace(var.cluster_domain, ".${var.base_domain}", "")}"
   router_external_name = "*.apps.${replace(var.cluster_domain, ".${var.base_domain}", "")}"
 }
 

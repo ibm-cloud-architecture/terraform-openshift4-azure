@@ -24,7 +24,7 @@ data "azurerm_storage_account_sas" "ignition" {
     file  = false
   }
 
-  start  = "${timestamp()}"
+  start = "${timestamp()}"
 
   expiry = "${timeadd(timestamp(), "24h")}"
 

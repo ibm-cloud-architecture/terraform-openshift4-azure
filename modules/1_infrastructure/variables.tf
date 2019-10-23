@@ -1,23 +1,23 @@
 variable "cluster_id" {
-  type = "string"
+  type = string
 }
 variable "azure_region" {
-  type = "string"
+  type = string
 }
 variable "machine_cidr" {
-  type = "string"
+  type    = string
   default = "10.0.0.0/16"
 }
 
 variable "master_count" {
-  type = "string"
+  type = string
 }
 
 variable "worker_count" {
-  type = "string"
+  type = string
 }
 
 variable "dependson" {
-  type = "list"
+  type    = list(string)
   default = []
 }

@@ -1,44 +1,49 @@
 variable "boot_diag_blob_endpoint" {
-  type = "string"
+  type = string
 }
 
 variable "network_interface_id" {
-  type = "string"
+  type = string
 }
 
 variable "cluster_id" {
-  type = "string"
+  type = string
 }
 
 variable "dependson" {
-  type = "list"
+  type    = list(string)
   default = []
 }
 
 variable "identity" {
-  type = "string"
+  type = string
 }
 
 variable "ignition" {
-  type = "string"
+  type = string
 }
 
 variable "nsg_name" {
-  type = "string"
+  type = string
 }
 
 variable "azure_region" {
-  type = "string"
+  type = string
 }
 
 variable "resource_group_name" {
-  type = "string"
+  type = string
 }
 
 variable "vm_image" {
-  type = "string"
+  type = string
 }
 
 variable "vm_size" {
-  type = "string"
+  type = string
+}
+
+variable "bootstrap_complete" {
+  type    = bool
+  default = false
 }

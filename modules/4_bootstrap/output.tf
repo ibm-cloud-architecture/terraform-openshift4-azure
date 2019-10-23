@@ -1,3 +1,3 @@
 output "module_completed" {
-  value = join(",", list(azurerm_virtual_machine.bootstrap.id))
+  value = join(",", azurerm_virtual_machine.bootstrap.*.id)
 }

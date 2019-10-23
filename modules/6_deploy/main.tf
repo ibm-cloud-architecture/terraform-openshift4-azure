@@ -6,7 +6,7 @@ resource "null_resource" "dependency" {
 }
 
 locals {
-  installer_workspace =  "${path.root}/installer-files"
+  installer_workspace = "${path.root}/installer-files"
 }
 
 resource "null_resource" "install-cluster" {

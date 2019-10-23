@@ -25,4 +25,3 @@ resource "azurerm_subnet" "node_subnet" {
   address_prefix       = "${local.node_subnet_cidr}"
   name                 = "${var.cluster_id}-worker-subnet"
 }
-

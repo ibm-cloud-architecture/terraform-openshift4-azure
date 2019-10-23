@@ -13,7 +13,7 @@ locals {
 data "azurerm_subscription" "current" {}
 
 resource "azurerm_virtual_machine" "node" {
-  count                 = "${var.instance_count}"
+  count = "${var.instance_count}"
 
   lifecycle {
     ignore_changes = [
@@ -26,8 +26,8 @@ resource "azurerm_virtual_machine" "node" {
   resource_group_name   = "${var.resource_group_name}"
   network_interface_ids = ["${element(var.network_intreface_id, count.index)}"]
   vm_size               = "${var.vm_size}"
-  zones                 = ["${count.index%3 + 1}"]
-  tags                  = { "openshift": "${var.node_type}" }
+  zones                 = ["${count.index % 3 + 1}"]
+  tags                  = { "openshift" : "${var.node_type}" }
 
   delete_os_disk_on_termination = true
 
@@ -68,7 +68,7 @@ resource "azurerm_virtual_machine" "node" {
     enabled     = true
     storage_uri = "${var.boot_diag_blob_endpoint}"
   }
-  depends_on          = [
+  depends_on = [
     "null_resource.dependency"
   ]
 }

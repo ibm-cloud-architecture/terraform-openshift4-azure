@@ -7,6 +7,9 @@ resource "azurerm_network_security_group" "worker" {
 resource "azurerm_subnet_network_security_group_association" "worker" {
   subnet_id                 = "${azurerm_subnet.node_subnet.id}"
   network_security_group_id = "${azurerm_network_security_group.worker.id}"
+  depends_on = [
+    "azurerm_network_interface.worker"
+  ]
 }
 
 resource "azurerm_network_security_group" "master" {
@@ -18,6 +21,10 @@ resource "azurerm_network_security_group" "master" {
 resource "azurerm_subnet_network_security_group_association" "master" {
   subnet_id                 = "${azurerm_subnet.master_subnet.id}"
   network_security_group_id = "${azurerm_network_security_group.master.id}"
+  depends_on = [
+    "azurerm_network_interface.master",
+    "azurerm_network_interface.bootstrap"
+  ]
 }
 
 resource "azurerm_network_security_rule" "apiserver_in" {

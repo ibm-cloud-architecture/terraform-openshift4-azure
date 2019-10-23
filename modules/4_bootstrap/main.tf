@@ -11,7 +11,7 @@ locals {
 data "azurerm_subscription" "current" {}
 
 resource "azurerm_virtual_machine" "bootstrap" {
-
+  count = "${var.bootstrap_complete ? 0 : 1}"
   lifecycle {
     ignore_changes = [
       "os_profile"
@@ -62,7 +62,7 @@ resource "azurerm_virtual_machine" "bootstrap" {
     enabled     = true
     storage_uri = "${var.boot_diag_blob_endpoint}"
   }
-  depends_on          = [
+  depends_on = [
     "null_resource.dependency"
   ]
 }

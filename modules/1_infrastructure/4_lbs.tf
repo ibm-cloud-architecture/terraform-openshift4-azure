@@ -4,7 +4,7 @@ locals {
   app_lb_frontend_ip_configuration_name      = "app-lb-ip"
   // The name of the masters' ipconfiguration is hardcoded to "pipconfig". It needs to match cluster-api
   // https://github.com/openshift/cluster-api-provider-azure/blob/master/pkg/cloud/azure/services/networkinterfaces/networkinterfaces.go#L180
-  ip_configuration_name = "pipConfig"
+  ip_configuration_name               = "pipConfig"
   bootstrap_nic_ip_configuration_name = "bootstrap-nic-ip"
 
 }
@@ -249,9 +249,6 @@ resource "azurerm_network_interface" "master" {
     name                          = "${local.ip_configuration_name}"
     private_ip_address_allocation = "Dynamic"
   }
-  depends_on = [
-    "azurerm_subnet_network_security_group_association.master"
-  ]
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master" {
@@ -288,9 +285,6 @@ resource "azurerm_network_interface" "bootstrap" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = "${azurerm_public_ip.bootstrap_public_ip.id}"
   }
-  depends_on = [
-    "azurerm_subnet_network_security_group_association.master"
-  ]
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap" {
@@ -318,9 +312,6 @@ resource "azurerm_network_interface" "worker" {
     name                          = "${local.ip_configuration_name}"
     private_ip_address_allocation = "Dynamic"
   }
-  depends_on = [
-    "azurerm_subnet_network_security_group_association.worker"
-  ]
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "worker" {

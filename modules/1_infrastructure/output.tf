@@ -35,15 +35,15 @@ output "master_ip_addresses" {
 }
 
 output "private_ssh_key" {
-    value = "${chomp(tls_private_key.installkey.private_key_pem)}"
+  value = "${chomp(tls_private_key.installkey.private_key_pem)}"
 }
 
 output "public_ssh_key" {
-    value = "${chomp(tls_private_key.installkey.public_key_openssh)}"
+  value = "${chomp(tls_private_key.installkey.public_key_openssh)}"
 }
 
 output "storage_account_name" {
-  value   = "${azurerm_storage_account.ignition.name}"
+  value = "${azurerm_storage_account.ignition.name}"
 }
 
 output "storage_container_name" {

@@ -1,4 +1,4 @@
 variable "dependson" {
-  type = "list"
+  type    = list(string)
   default = []
 }

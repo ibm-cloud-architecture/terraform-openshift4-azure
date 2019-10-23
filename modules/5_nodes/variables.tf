@@ -1,52 +1,52 @@
 variable "azure_region" {
-  type = "string"
+  type = string
 }
 
 variable "boot_diag_blob_endpoint" {
-  type = "string"
+  type = string
 }
 
 variable "cluster_id" {
-  type = "string"
+  type = string
 }
 
 variable "dependson" {
-  type = "list"
+  type    = list(string)
   default = []
 }
 
 variable "identity" {
-  type = "string"
+  type = string
 }
 
 variable "instance_count" {
-  type = "string"
+  type = string
 }
 
 variable "ignition" {
-  type = "string"
+  type = string
 }
 
 variable "network_intreface_id" {
-  type = "list"
+  type = list(string)
 }
 
 variable "vm_size" {
-  type = "string"
+  type = string
 }
 
 variable "os_volume_size" {
-  type = "string"
+  type = string
 }
 
 variable "resource_group_name" {
-  type = "string"
+  type = string
 }
 
 variable "vm_image" {
-  type = "string"
+  type = string
 }
 
 variable "node_type" {
-  type = "string"
+  type = string
 }

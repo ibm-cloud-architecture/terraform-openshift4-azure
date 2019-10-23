@@ -1,118 +1,118 @@
 variable "dependson" {
-  type = "list"
+  type    = list(string)
   default = []
 }
 variable "base_domain" {
-  type = "string"
+  type = string
 }
 
 variable "master_count" {
-  type = "string"
+  type = string
 }
 
 variable "cluster_name" {
-  type = "string"
+  type = string
 }
 
 variable "cluster_network_cidr" {
-  type = "string" 
+  type = string
 }
 
 variable "cluster_network_host_prefix" {
-  type = "string"
+  type = string
 }
 
 variable "machine_cidr" {
-  type = "string"
+  type = string
 }
 
 variable "service_network_cidr" {
-  type = "string"
+  type = string
 }
 
 variable "azure_dns_resource_group_name" {
-  type = "string" 
+  type = string
 }
 
 variable "openshift_pull_secret" {
-  type = "string"
+  type = string
 }
 
 variable "public_ssh_key" {
-  type = "string"
+  type = string
 }
 
 variable "openshift_installer_url" {
-  type = "string"
+  type    = string
   default = "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/"
 }
 
 variable "cluster_id" {
-  type = "string"
+  type = string
 }
 
 variable "resource_group_name" {
-  type = "string"
+  type = string
 }
 
 variable "storage_account_name" {
-  type = "string"
+  type = string
 }
 
 variable "storage_container_name" {
-  type = "string"
+  type = string
 }
 
 variable "storage_account_sas" {
-  type = "string"
+  type = string
 }
 
 variable "node_count" {
-  type = "string"
+  type = string
 }
 
 variable "etcd_ip_addresses" {
-  type = "list"
+  type = list(string)
 }
 
 variable "azure_region" {
-  type = "string"
+  type = string
 }
 
 variable "master_vm_type" {
-  type = "string"
+  type = string
 }
 
 variable "worker_vm_type" {
-  type = "string"
+  type = string
 }
 
 variable "worker_os_disk_size" {
-  type = "string"
+  type    = string
   default = 128
 }
 
 variable "master_os_disk_size" {
-  type = "string"
+  type    = string
   default = 1024
 }
 
 variable "azure_subscription_id" {
-  type = "string"
+  type = string
 }
 
 variable "azure_client_id" {
-  type = "string"
+  type = string
 }
 
 variable "azure_client_secret" {
-  type = "string"
+  type = string
 }
 
 variable "azure_tenant_id" {
-  type = "string"
+  type = string
 }
 
 variable "azure_storage_azurefile_name" {
-  type = "string"
+  type = string
 }
