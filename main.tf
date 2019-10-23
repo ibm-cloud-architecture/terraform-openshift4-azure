@@ -32,7 +32,8 @@ module "dns" {
   cluster_domain                = "${var.openshift_cluster_name}.${var.base_domain}"
   base_domain                   = var.base_domain
   vnet_id                       = module.infrastructure.vnet_id
-  external_lb_fqdn              = module.infrastructure.public_lb_pip_fqdn
+  apps_external_lb_fqdn         = module.infrastructure.apps_lb_pip_fqdn
+  cluster_external_lb_fqdn      = module.infrastructure.cluster_lb_pip_fqdn
   internal_lb_ipaddress         = module.infrastructure.internal_lb_ip_address
   resource_group_name           = module.infrastructure.resource_group_name
   azure_dns_resource_group_name = var.azure_dns_resource_group_name

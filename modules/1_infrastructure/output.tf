@@ -14,12 +14,16 @@ output "node_subnet_cidr" {
   value = "${local.node_subnet_cidr}"
 }
 
-output "public_lb_pip_fqdn" {
+output "apps_lb_pip_fqdn" {
+  value = "${data.azurerm_public_ip.worker_public_ip.fqdn}"
+}
+
+output "cluster_lb_pip_fqdn" {
   value = "${data.azurerm_public_ip.cluster_public_ip.fqdn}"
 }
 
 output "internal_lb_ip_address" {
-  value = "${azurerm_lb.internal.private_ip_address}"
+  value = "${azurerm_lb.controlplane_internal.private_ip_address}"
 }
 
 output "vnet_id" {

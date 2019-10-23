@@ -3,6 +3,7 @@ resource "null_resource" "dependency" {
     all_dependencies = "${join(",", var.dependson)}"
   }
 }
+
 locals {
   installer_workspace =  "${path.root}/installer-files"
 }

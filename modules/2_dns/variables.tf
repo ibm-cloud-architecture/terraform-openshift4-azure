@@ -5,7 +5,11 @@ variable "dependson" {
   default = []
 }
 
-variable "external_lb_fqdn" {
+variable "apps_external_lb_fqdn" {
+  type = "string"
+}
+
+variable "cluster_external_lb_fqdn" {
   type = "string"
 }
 

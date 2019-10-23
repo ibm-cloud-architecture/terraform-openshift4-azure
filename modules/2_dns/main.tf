@@ -25,7 +25,7 @@ resource "azurerm_dns_cname_record" "apiint_internal" {
   zone_name           = "${azurerm_dns_zone.private.name}"
   resource_group_name = "${var.resource_group_name}"
   ttl                 = 300
-  record              = "${var.external_lb_fqdn}"
+  record              = "${var.cluster_external_lb_fqdn}"
 }
 
 resource "azurerm_dns_cname_record" "api_internal" {
@@ -33,7 +33,7 @@ resource "azurerm_dns_cname_record" "api_internal" {
   zone_name           = "${azurerm_dns_zone.private.name}"
   resource_group_name = "${var.resource_group_name}"
   ttl                 = 300
-  record              = "${var.external_lb_fqdn}"
+  record              = "${var.cluster_external_lb_fqdn}"
 }
 
 resource "azurerm_dns_cname_record" "router_internal" {
@@ -41,7 +41,7 @@ resource "azurerm_dns_cname_record" "router_internal" {
   zone_name           = "${azurerm_dns_zone.private.name}"
   resource_group_name = "${var.resource_group_name}"
   ttl                 = 300
-  record              = "${var.external_lb_fqdn}"
+  record              = "${var.apps_external_lb_fqdn}"
 }
 
 resource "azurerm_dns_cname_record" "api_external" {
@@ -49,7 +49,7 @@ resource "azurerm_dns_cname_record" "api_external" {
   zone_name           = "${var.base_domain}"
   resource_group_name = "${var.azure_dns_resource_group_name}"
   ttl                 = 300
-  record              = "${var.external_lb_fqdn}"
+  record              = "${var.cluster_external_lb_fqdn}"
 }
 
 resource "azurerm_dns_cname_record" "router_external" {
@@ -57,7 +57,7 @@ resource "azurerm_dns_cname_record" "router_external" {
   zone_name           = "${var.base_domain}"
   resource_group_name = "${var.azure_dns_resource_group_name}"
   ttl                 = 300
-  record              = "${var.external_lb_fqdn}"
+  record              = "${var.apps_external_lb_fqdn}"
 }
 
 resource "azurerm_dns_a_record" "etcd_a_nodes" {
