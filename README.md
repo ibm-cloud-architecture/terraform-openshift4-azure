@@ -99,6 +99,7 @@ azure_rhcos_image_id          = "/resourceGroups/rhcos_images/providers/Microsof
    terraform init
    terraform plan
    terraform apply
+   terraform destroy -target=module.bootstrap
    ```
 
 4.  To access your cluster
