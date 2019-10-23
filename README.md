@@ -91,7 +91,7 @@ azure_rhcos_image_id          = "/resourceGroups/rhcos_images/providers/Microsof
 
     `git clone git@github.ibm.com:ncolon/ocp4-azure-upi.git`
 
-2. Modify create your terraform.tfvars file
+2. Create/modify your terraform.tfvars file
 
 3. Deploy with terraform
 
