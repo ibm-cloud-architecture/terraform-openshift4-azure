@@ -116,3 +116,7 @@ variable "azure_tenant_id" {
 variable "azure_storage_azurefile_name" {
   type = string
 }
+
+variable "azure_rhcos_image_id" {
+  type = string
+}

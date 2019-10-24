@@ -73,3 +73,16 @@ resource "azurerm_virtual_machine" "node" {
   ]
 }
 
+# hack - internal loadbalancers can't handle hairpin NAT
+# https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview#limitations
+# we add the servers to the backend server pool after bootstrap is complete otherwise
+# it could ask for bootstrap information from itself and fail.
+resource "azurerm_network_interface_backend_address_pool_association" "node_association" {
+  count                   = var.instance_count
+  network_interface_id    = element(var.network_interface_ids, count.index)
+  backend_address_pool_id = var.backend_address_pool_id
+  ip_configuration_name   = local.ip_configuration_name
+  depends_on = [
+    "azurerm_virtual_machine.node"
+  ]
+}

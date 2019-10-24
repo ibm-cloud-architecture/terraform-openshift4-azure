@@ -237,6 +237,16 @@ resource "azurerm_lb_probe" "public_lb_http" {
   protocol            = "TCP"
 }
 
+resource "azurerm_lb_probe" "public_lb_https" {
+  name                = "probe-https"
+  resource_group_name = "${azurerm_resource_group.openshift.name}"
+  interval_in_seconds = 10
+  number_of_probes    = 3
+  loadbalancer_id     = "${azurerm_lb.worker_public.id}"
+  port                = 443
+  protocol            = "TCP"
+}
+
 # MASTER VM NETWORKING
 resource "azurerm_network_interface" "master" {
   count               = "${var.master_count}"
@@ -258,12 +268,12 @@ resource "azurerm_network_interface_backend_address_pool_association" "master" {
   ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "master_internal" {
-  count                   = "${var.master_count}"
-  network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id}"
-  ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
-}
+# resource "azurerm_network_interface_backend_address_pool_association" "master_internal" {
+#   count                   = "${var.master_count}"
+#   network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
+#   backend_address_pool_id = "${azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id}"
+#   ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
+# }
 
 # BOOTSTRAP VM NETWORKING
 resource "azurerm_public_ip" "bootstrap_public_ip" {
@@ -314,9 +324,9 @@ resource "azurerm_network_interface" "worker" {
   }
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "worker" {
-  count                   = "${var.worker_count}"
-  network_interface_id    = "${element(azurerm_network_interface.worker.*.id, count.index)}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
-  ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
-}
+# resource "azurerm_network_interface_backend_address_pool_association" "worker" {
+#   count                   = "${var.worker_count}"
+#   network_interface_id    = "${element(azurerm_network_interface.worker.*.id, count.index)}"
+#   backend_address_pool_id = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
+#   ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
+# }

@@ -50,3 +50,16 @@ variable "vm_image" {
 variable "node_type" {
   type = string
 }
+
+# begin hack - internal loadbalancers can't handle hairpin NAT
+# https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview#limitations
+variable "network_interface_ids" {
+  type    = list(string)
+  default = []
+}
+
+variable "backend_address_pool_id" {
+  type    = string
+  default = ""
+}
+# end hack

@@ -20,3 +20,4 @@ makefile
 
 # installer-files
 **/installer-files/*
+*.backup

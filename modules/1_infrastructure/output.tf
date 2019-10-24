@@ -69,6 +69,10 @@ output "public_lb_backend_pool_id" {
   value = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
 }
 
+output "worker_lb_backend_pool_id" {
+  value = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
+}
+
 output "internal_lb_backend_pool_id" {
   value = "${azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id}"
 }
@@ -97,6 +101,9 @@ output "azure_storage_azurefile_name" {
   value = "${azurerm_storage_share.azurefile.name}"
 }
 
+output "internal_lb_controlplane_pool_id" {
+  value = azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id
+}
 output "module_completed" {
   value = "${join(",",
     "${list(azurerm_resource_group.openshift.id)}",
@@ -105,5 +112,9 @@ output "module_completed" {
     "${list(azurerm_subnet.node_subnet.id)}",
     "${list(azurerm_subnet_network_security_group_association.master.id)}",
     "${list(azurerm_subnet_network_security_group_association.worker.id)}",
+    "${azurerm_network_interface_backend_address_pool_association.master.*.id}",
+    # "${azurerm_network_interface_backend_address_pool_association.master_internal.*.id}",
+    # "${azurerm_network_interface_backend_address_pool_association.worker.*.id}",
+    "${list(azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap.id)}",
   )}"
 }

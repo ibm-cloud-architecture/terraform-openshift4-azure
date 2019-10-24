@@ -83,6 +83,8 @@ resource "null_resource" "generate_ignition" {
     "local_file.cluster-scheduler-02-config",
   ]
 
+  # remove worker-machineset config files for now until images can be created dynamically with terraform
+  # https://github.com/terraform-providers/terraform-provider-azurerm/issues/4361
   provisioner "local-exec" {
     command = <<EOF
 rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-*

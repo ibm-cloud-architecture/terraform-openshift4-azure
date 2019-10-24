@@ -76,6 +76,7 @@ module "ignition" {
   azure_client_secret           = var.azure_client_secret
   azure_tenant_id               = var.azure_tenant_id
   azure_storage_azurefile_name  = module.infrastructure.azure_storage_azurefile_name
+  azure_rhcos_image_id          = var.azure_rhcos_image_id
 }
 
 module "bootstrap" {
@@ -104,7 +105,6 @@ module "controlplane" {
     "${module.infrastructure.module_completed}",
     "${module.dns.module_completed}",
     "${module.ignition.module_completed}",
-    # "${module.bootstrap.module_completed}"
   ]
   instance_count          = var.openshift_master_count
   resource_group_name     = module.infrastructure.resource_group_name
@@ -118,6 +118,8 @@ module "controlplane" {
   network_intreface_id    = module.infrastructure.master_network_interface_id
   os_volume_size          = var.azure_master_root_volume_size
   node_type               = "master"
+  network_interface_ids   = module.infrastructure.master_network_interface_id
+  backend_address_pool_id = module.infrastructure.internal_lb_controlplane_pool_id
 }
 
 module "worker" {
@@ -126,7 +128,6 @@ module "worker" {
     "${module.infrastructure.module_completed}",
     "${module.dns.module_completed}",
     "${module.ignition.module_completed}",
-    # "${module.bootstrap.module_completed}"
   ]
   instance_count          = var.openshift_worker_count
   resource_group_name     = module.infrastructure.resource_group_name
@@ -140,6 +141,8 @@ module "worker" {
   network_intreface_id    = module.infrastructure.worker_network_interface_id
   os_volume_size          = var.azure_worker_root_volume_size
   node_type               = "worker"
+  network_interface_ids   = module.infrastructure.worker_network_interface_id
+  backend_address_pool_id = module.infrastructure.worker_lb_backend_pool_id
 }
 
 
@@ -153,4 +156,7 @@ module "deploy" {
     "${module.controlplane.module_completed}",
     "${module.worker.module_completed}",
   ]
+  azure_region        = var.azure_region
+  resource_group_name = module.infrastructure.resource_group_name
+  cluster_id          = local.cluster_id
 }

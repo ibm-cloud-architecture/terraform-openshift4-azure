@@ -1,3 +1,6 @@
 output "module_completed" {
-  value = null_resource.install-cluster.id
+  value = join(",",
+    list(null_resource.install-cluster.id),
+    azurerm_image.rhcosimage.*.id,
+  )
 }
