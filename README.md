@@ -88,23 +88,24 @@ azure_rhcos_image_id   = "/resourceGroups/rhcos_images/providers/Microsoft.Compu
 # Deploy with Terraform
 
 1. Clone github repository
-
-    `git clone git@github.ibm.com:ncolon/ocp4-azure-upi.git`
+	```bash
+	git clone git@github.ibm.com:ncolon/ocp4-azure-upi.git
+	```
 
 2. Create/modify your terraform.tfvars file
 
 3. Deploy with terraform
-
-4. ```bash
-   $ terraform init
-   $ terraform plan
-   $ terraform apply
-   $ terraform destroy -target=module.bootstrap
-   ```
-
-4.  To access your cluster
-
-5. ```bash
+	```bash
+  $ terraform init
+  $ terraform plan
+  $ terraform apply
+  ```
+4.  Destroy bootstrap node
+	```bash
+	$ TF_VAR_bootstrap_complete=true terraform apply
+	```
+5.  To access your cluster
+	```bash
    $ export KUBECONFIG=$PWD/installer-files/auth/kubeconfig
    $ oc get nodes
    NAME                   STATUS   ROLES    AGE    VERSION
@@ -114,4 +115,4 @@ azure_rhcos_image_id   = "/resourceGroups/rhcos_images/providers/Microsoft.Compu
    ocp42-kktg0-worker-0   Ready    worker   104m   v1.14.6+c07e432da
    ocp42-kktg0-worker-1   Ready    worker   104m   v1.14.6+c07e432da
    ocp42-kktg0-worker-2   Ready    worker   104m   v1.14.6+c07e432da
-   ```
+  ```
