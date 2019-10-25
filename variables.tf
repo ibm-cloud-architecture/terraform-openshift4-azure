@@ -56,7 +56,6 @@ variable "azure_worker_vm_type" {
   default = "Standard_D4s_v3"
 }
 
-
 variable "base_domain" {
   type = string
 }

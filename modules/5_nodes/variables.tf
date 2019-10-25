@@ -58,17 +58,8 @@ variable "network_interface_ids" {
   default = []
 }
 
-variable "external_backend_address_pool_id" {
+variable "backend_address_pool_id" {
   type    = string
   default = ""
 }
-
-variable "internal_backend_address_pool_id" {
-  type    = string
-  default = ""
-}
-# variable "pools_map" {
-#   type    = map(string)
-#   default = {}
-# }
 # end hack

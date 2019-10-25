@@ -69,7 +69,7 @@ resource "azurerm_virtual_machine" "bootstrap" {
 
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
   name                        = "bootstrap_ssh_in"
-  priority                    = 103
+  priority                    = 112
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"

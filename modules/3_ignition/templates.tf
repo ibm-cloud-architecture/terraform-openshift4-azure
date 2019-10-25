@@ -110,7 +110,7 @@ data:
     \"\",\n\t\"aadClientSecret\": \"\",\n\t\"aadClientCertPath\": \"\",\n\t\"aadClientCertPassword\":
     \"\",\n\t\"useManagedIdentityExtension\": true,\n\t\"userAssignedIdentityID\":
     \"\",\n\t\"subscriptionId\": \"${var.azure_subscription_id}\",\n\t\"resourceGroup\":
-    \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.controlplane_vnet_name}\",\n\t\"vnetResourceGroup\":
+    \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.controlplane_vnet_id}\",\n\t\"vnetResourceGroup\":
     \"${var.cluster_id}-rg\",\n\t\"subnetName\": \"${var.cluster_id}-node-subnet\",\n\t\"securityGroupName\":
     \"${var.cluster_id}-node-nsg\",\n\t\"routeTableName\": \"${var.cluster_id}-node-routetable\",\n\t\"primaryAvailabilitySetName\":
     \"\",\n\t\"vmType\": \"\",\n\t\"primaryScaleSetName\": \"\",\n\t\"cloudProviderBackoff\":
@@ -225,7 +225,7 @@ spec:
       userDataSecret:
         name: master-user-data
       vmSize: ${var.master_vm_type}
-      vnet: ${var.controlplane_vnet_name}
+      vnet: ${var.controlplane_vnet_id}
       zone: "${count.index + 1}"
 status: {}
 EOF
@@ -306,7 +306,7 @@ spec:
           userDataSecret:
             name: worker-user-data
           vmSize: ${var.worker_vm_type}
-          vnet: ${var.worker_vnet_name}
+          vnet: ${var.worker_vnet_id}
           zone: "${count.index + 1}"
 status:
   replicas: 0

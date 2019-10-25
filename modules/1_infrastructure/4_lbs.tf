@@ -121,7 +121,7 @@ resource "azurerm_lb" "controlplane_public" {
   }
 }
 
-resource "azurerm_lb_backend_address_pool" "external_lb_controlplane_pool" {
+resource "azurerm_lb_backend_address_pool" "master_public_lb_pool" {
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   loadbalancer_id     = "${azurerm_lb.controlplane_public.id}"
   name                = "${var.cluster_id}-public-lb-control-plane"
@@ -131,7 +131,7 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
   name                           = "api-internal"
   resource_group_name            = "${azurerm_resource_group.openshift.name}"
   protocol                       = "Tcp"
-  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
   loadbalancer_id                = "${azurerm_lb.controlplane_public.id}"
   frontend_port                  = 6443
   backend_port                   = 6443
@@ -146,7 +146,7 @@ resource "azurerm_lb_rule" "public_lb_rule_bootstrap_internal" {
   name                           = "bootstrap-internal"
   resource_group_name            = "${azurerm_resource_group.openshift.name}"
   protocol                       = "Tcp"
-  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
   loadbalancer_id                = "${azurerm_lb.controlplane_public.id}"
   frontend_port                  = 22623
   backend_port                   = 22623
@@ -261,12 +261,12 @@ resource "azurerm_network_interface" "master" {
   }
 }
 
-# resource "azurerm_network_interface_backend_address_pool_association" "master" {
-#   count                   = "${var.master_count}"
-#   network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
-#   backend_address_pool_id = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
-#   ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
-# }
+resource "azurerm_network_interface_backend_address_pool_association" "master" {
+  count                   = "${var.master_count}"
+  network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
+  backend_address_pool_id = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
+  ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
+}
 
 # resource "azurerm_network_interface_backend_address_pool_association" "master_internal" {
 #   count                   = "${var.master_count}"
@@ -299,7 +299,7 @@ resource "azurerm_network_interface" "bootstrap" {
 
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap" {
   network_interface_id    = "${azurerm_network_interface.bootstrap.id}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
+  backend_address_pool_id = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
   ip_configuration_name   = "${local.bootstrap_nic_ip_configuration_name}"
 }
 
@@ -324,9 +324,9 @@ resource "azurerm_network_interface" "worker" {
   }
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "worker" {
-  count                   = "${var.worker_count}"
-  network_interface_id    = "${element(azurerm_network_interface.worker.*.id, count.index)}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
-  ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
-}
+# resource "azurerm_network_interface_backend_address_pool_association" "worker" {
+#   count                   = "${var.worker_count}"
+#   network_interface_id    = "${element(azurerm_network_interface.worker.*.id, count.index)}"
+#   backend_address_pool_id = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
+#   ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
+# }

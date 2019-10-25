@@ -40,7 +40,7 @@ module "dns" {
   etcd_ip_addresses             = module.infrastructure.master_ip_addresses
   vnet_ids = [
     module.infrastructure.controlplane_vnet_id,
-    module.infrastructure.worker_vnet_id,
+    module.infrastructure.worker_vnet_id
   ]
 }
 
@@ -80,8 +80,8 @@ module "ignition" {
   azure_tenant_id               = var.azure_tenant_id
   azure_storage_azurefile_name  = module.infrastructure.azure_storage_azurefile_name
   azure_rhcos_image_id          = var.azure_rhcos_image_id
-  controlplane_vnet_name        = module.infrastructure.controlplane_vnet_name
-  worker_vnet_name              = module.infrastructure.worker_vnet_name
+  controlplane_vnet_id          = module.infrastructure.controlplane_vnet_id
+  worker_vnet_id                = module.infrastructure.worker_vnet_id
 }
 
 module "bootstrap" {
@@ -110,22 +110,22 @@ module "controlplane" {
     "${module.infrastructure.module_completed}",
     "${module.dns.module_completed}",
     "${module.ignition.module_completed}",
+    "${module.bootstrap.module_completed}"
   ]
-  instance_count                   = var.openshift_master_count
-  resource_group_name              = module.infrastructure.resource_group_name
-  cluster_id                       = local.cluster_id
-  azure_region                     = var.azure_region
-  vm_size                          = var.azure_master_vm_type
-  vm_image                         = var.azure_rhcos_image_id
-  identity                         = module.infrastructure.user_assigned_identity_id
-  ignition                         = module.ignition.master_ignition
-  boot_diag_blob_endpoint          = module.infrastructure.boot_diag_blob_endpoint
-  network_intreface_id             = module.infrastructure.master_network_interface_id
-  os_volume_size                   = var.azure_master_root_volume_size
-  node_type                        = "master"
-  network_interface_ids            = module.infrastructure.master_network_interface_id
-  external_backend_address_pool_id = module.infrastructure.external_lb_controlplane_pool_id
-  internal_backend_address_pool_id = module.infrastructure.internal_lb_controlplane_pool_id
+  instance_count          = var.openshift_master_count
+  resource_group_name     = module.infrastructure.resource_group_name
+  cluster_id              = local.cluster_id
+  azure_region            = var.azure_region
+  vm_size                 = var.azure_master_vm_type
+  vm_image                = var.azure_rhcos_image_id
+  identity                = module.infrastructure.user_assigned_identity_id
+  ignition                = module.ignition.master_ignition
+  boot_diag_blob_endpoint = module.infrastructure.boot_diag_blob_endpoint
+  network_intreface_id    = module.infrastructure.master_network_interface_id
+  os_volume_size          = var.azure_master_root_volume_size
+  node_type               = "master"
+  network_interface_ids   = module.infrastructure.master_network_interface_id
+  backend_address_pool_id = module.infrastructure.internal_lb_controlplane_pool_id
 }
 
 module "worker" {
@@ -134,6 +134,7 @@ module "worker" {
     "${module.infrastructure.module_completed}",
     "${module.dns.module_completed}",
     "${module.ignition.module_completed}",
+    "${module.bootstrap.module_completed}"
   ]
   instance_count          = var.openshift_worker_count
   resource_group_name     = module.infrastructure.resource_group_name
@@ -147,7 +148,8 @@ module "worker" {
   network_intreface_id    = module.infrastructure.worker_network_interface_id
   os_volume_size          = var.azure_worker_root_volume_size
   node_type               = "worker"
-  # pools_map               = module.infrastructure.worker_pools_map
+  network_interface_ids   = module.infrastructure.worker_network_interface_id
+  backend_address_pool_id = module.infrastructure.worker_lb_backend_pool_id
 }
 
 

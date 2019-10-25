@@ -1,6 +1,6 @@
 # OpenShift 4 UPI on Azure Cloud
 
-This [terraform](terraform.io) implementation will deploy OpenShift 4.x into an Azure VNET, with two subnets for controlplane and worker nodes.  Traffic to the master nodes is handled via a pair of loadbalancers, one for internal traffic and another for external API traffic.  Application loadbalancing is handled by a third loadbalancer that talks to the worker nodes.  Worker and Master VMs are deployed across 3 Availability Zones
+This [terraform](terraform.io) implementation will deploy OpenShift 4.x into an pair of Azure VNETs, with two subnets for controlplane and worker nodes.  Traffic to the master nodes is handled via a pair of loadbalancers, one for internal traffic and another for external API traffic.  Application loadbalancing is handled by a third loadbalancer that talks to the worker nodes.  Worker and Master VMs are deployed across 3 Availability Zones
 
 ![Topology](./media/topology.svg) 
 
@@ -10,7 +10,7 @@ We use different Terraform modules to achieve these results:
 
 1. `modules/1_infrastructure` - Creates the network infrastrucure to deploy OpenShift
    * Creates a resource group	
-   * Creates a VNET and subnets
+   * git commCreates a VNET and subnets
    * Creates network security groups to handle traffic
    * Creates LoadBalancers and assigns node pools
    * Creates storage for ignition and azure-file storageclass
@@ -52,7 +52,7 @@ azure_client_id        = "ZZZZZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZZZZZZZZZ"
 azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 
 # From Prereq. Step #3
-azure_rhcos_image_id          = "/resourceGroups/rhcos_images/providers/Microsoft.Compute/images/rhcostestimage"
+azure_rhcos_image_id   = "/resourceGroups/rhcos_images/providers/Microsoft.Compute/images/rhcostestimage"
 ```
 
 
