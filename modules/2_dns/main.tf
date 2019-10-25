@@ -8,7 +8,7 @@ resource "azurerm_dns_zone" "private" {
   name                           = "${var.cluster_domain}"
   resource_group_name            = "${var.resource_group_name}"
   zone_type                      = "Private"
-  resolution_virtual_network_ids = ["${var.vnet_id}"]
+  resolution_virtual_network_ids = var.vnet_ids
   depends_on = [
     "null_resource.dependency"
   ]

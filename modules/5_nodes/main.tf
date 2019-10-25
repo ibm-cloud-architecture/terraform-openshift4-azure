@@ -77,12 +77,33 @@ resource "azurerm_virtual_machine" "node" {
 # https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-overview#limitations
 # we add the servers to the backend server pool after bootstrap is complete otherwise
 # it could ask for bootstrap information from itself and fail.
-resource "azurerm_network_interface_backend_address_pool_association" "node_association" {
-  count                   = var.instance_count
+resource "azurerm_network_interface_backend_address_pool_association" "external_association" {
+  count                   = var.node_type == "master" ? var.instance_count : 0
   network_interface_id    = element(var.network_interface_ids, count.index)
-  backend_address_pool_id = var.backend_address_pool_id
+  backend_address_pool_id = var.external_backend_address_pool_id
   ip_configuration_name   = local.ip_configuration_name
   depends_on = [
     "azurerm_virtual_machine.node"
   ]
 }
+
+resource "azurerm_network_interface_backend_address_pool_association" "internal_association" {
+  count                   = var.node_type == "master" ? var.instance_count : 0
+  network_interface_id    = element(var.network_interface_ids, count.index)
+  backend_address_pool_id = var.internal_backend_address_pool_id
+  ip_configuration_name   = local.ip_configuration_name
+  depends_on = [
+    "azurerm_virtual_machine.node"
+  ]
+}
+
+
+# resource "azurerm_network_interface_backend_address_pool_association" "pool_associations" {
+#   for_each                = var.pools_map
+#   network_interface_id    = element(var.network_interface_ids, each.value["count"])
+#   ip_configuration_name   = local.ip_configuration_name
+#   backend_address_pool_id = each.value["id"]
+#   depends_on = [
+#     "azurerm_virtual_machine.node"
+#   ]
+# }

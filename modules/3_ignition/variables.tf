@@ -120,3 +120,11 @@ variable "azure_storage_azurefile_name" {
 variable "azure_rhcos_image_id" {
   type = string
 }
+
+variable "controlplane_vnet_name" {
+  type = string
+}
+
+variable "worker_vnet_name" {
+  type = string
+}

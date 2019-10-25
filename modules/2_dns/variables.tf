@@ -37,6 +37,6 @@ variable "base_domain" {
   type = string
 }
 
-variable "vnet_id" {
-  type = string
+variable "vnet_ids" {
+  type = list(string)
 }

@@ -19,7 +19,7 @@ resource "azurerm_lb" "controlplane_internal" {
     name                          = "${local.internal_lb_frontend_ip_configuration_name}"
     subnet_id                     = "${azurerm_subnet.master_subnet.id}"
     private_ip_address_allocation = "Static"
-    private_ip_address            = "${cidrhost(local.master_subnet_cidr, -2)}" #last ip is reserved by azure
+    private_ip_address            = "${cidrhost(local.controlplane_subnet_cidr, -2)}" #last ip is reserved by azure
   }
 }
 
@@ -44,8 +44,8 @@ resource "azurerm_lb_rule" "internal_lb_rule_api_internal" {
   probe_id                       = "${azurerm_lb_probe.internal_lb_probe_api_internal.id}"
 }
 
-resource "azurerm_lb_rule" "internal_lb_rule_sint" {
-  name                           = "sint"
+resource "azurerm_lb_rule" "internal_lb_rule_bootstrap" {
+  name                           = "bootstrap"
   resource_group_name            = "${azurerm_resource_group.openshift.name}"
   protocol                       = "Tcp"
   backend_address_pool_id        = "${azurerm_lb_backend_address_pool.internal_lb_controlplane_pool.id}"
@@ -56,11 +56,11 @@ resource "azurerm_lb_rule" "internal_lb_rule_sint" {
   enable_floating_ip             = false
   idle_timeout_in_minutes        = 30
   load_distribution              = "Default"
-  probe_id                       = "${azurerm_lb_probe.internal_lb_probe_sint.id}"
+  probe_id                       = "${azurerm_lb_probe.internal_lb_probe_bootstrap.id}"
 }
 
-resource "azurerm_lb_probe" "internal_lb_probe_sint" {
-  name                = "sint-probe"
+resource "azurerm_lb_probe" "internal_lb_probe_bootstrap" {
+  name                = "bootstrap-probe"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   interval_in_seconds = 10
   number_of_probes    = 3
@@ -121,7 +121,7 @@ resource "azurerm_lb" "controlplane_public" {
   }
 }
 
-resource "azurerm_lb_backend_address_pool" "master_public_lb_pool" {
+resource "azurerm_lb_backend_address_pool" "external_lb_controlplane_pool" {
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   loadbalancer_id     = "${azurerm_lb.controlplane_public.id}"
   name                = "${var.cluster_id}-public-lb-control-plane"
@@ -131,7 +131,7 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
   name                           = "api-internal"
   resource_group_name            = "${azurerm_resource_group.openshift.name}"
   protocol                       = "Tcp"
-  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
   loadbalancer_id                = "${azurerm_lb.controlplane_public.id}"
   frontend_port                  = 6443
   backend_port                   = 6443
@@ -142,11 +142,11 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
   probe_id                       = "${azurerm_lb_probe.public_lb_probe_api_internal.id}"
 }
 
-resource "azurerm_lb_rule" "public_lb_rule_sint_internal" {
-  name                           = "sint-internal"
+resource "azurerm_lb_rule" "public_lb_rule_bootstrap_internal" {
+  name                           = "bootstrap-internal"
   resource_group_name            = "${azurerm_resource_group.openshift.name}"
   protocol                       = "Tcp"
-  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
+  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
   loadbalancer_id                = "${azurerm_lb.controlplane_public.id}"
   frontend_port                  = 22623
   backend_port                   = 22623
@@ -154,7 +154,7 @@ resource "azurerm_lb_rule" "public_lb_rule_sint_internal" {
   enable_floating_ip             = false
   idle_timeout_in_minutes        = 30
   load_distribution              = "Default"
-  probe_id                       = "${azurerm_lb_probe.public_lb_sint.id}"
+  probe_id                       = "${azurerm_lb_probe.public_lb_bootstrap.id}"
 }
 
 resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
@@ -167,8 +167,8 @@ resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
   protocol            = "TCP"
 }
 
-resource "azurerm_lb_probe" "public_lb_sint" {
-  name                = "sint-probe"
+resource "azurerm_lb_probe" "public_lb_bootstrap" {
+  name                = "bootstrap-probe"
   resource_group_name = "${azurerm_resource_group.openshift.name}"
   interval_in_seconds = 10
   number_of_probes    = 3
@@ -261,12 +261,12 @@ resource "azurerm_network_interface" "master" {
   }
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "master" {
-  count                   = "${var.master_count}"
-  network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
-  ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
-}
+# resource "azurerm_network_interface_backend_address_pool_association" "master" {
+#   count                   = "${var.master_count}"
+#   network_interface_id    = "${element(azurerm_network_interface.master.*.id, count.index)}"
+#   backend_address_pool_id = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
+#   ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
+# }
 
 # resource "azurerm_network_interface_backend_address_pool_association" "master_internal" {
 #   count                   = "${var.master_count}"
@@ -299,7 +299,7 @@ resource "azurerm_network_interface" "bootstrap" {
 
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap" {
   network_interface_id    = "${azurerm_network_interface.bootstrap.id}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.master_public_lb_pool.id}"
+  backend_address_pool_id = "${azurerm_lb_backend_address_pool.external_lb_controlplane_pool.id}"
   ip_configuration_name   = "${local.bootstrap_nic_ip_configuration_name}"
 }
 
@@ -324,9 +324,9 @@ resource "azurerm_network_interface" "worker" {
   }
 }
 
-# resource "azurerm_network_interface_backend_address_pool_association" "worker" {
-#   count                   = "${var.worker_count}"
-#   network_interface_id    = "${element(azurerm_network_interface.worker.*.id, count.index)}"
-#   backend_address_pool_id = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
-#   ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
-# }
+resource "azurerm_network_interface_backend_address_pool_association" "worker" {
+  count                   = "${var.worker_count}"
+  network_interface_id    = "${element(azurerm_network_interface.worker.*.id, count.index)}"
+  backend_address_pool_id = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
+  ip_configuration_name   = "${local.ip_configuration_name}" #must be the same as nic's ip configuration name.
+}
