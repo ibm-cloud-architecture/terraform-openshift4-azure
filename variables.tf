@@ -96,7 +96,19 @@ variable "azure_rhcos_image_id" {
   default = "/resourceGroups/rhcos_images/providers/Microsoft.Compute/images/rhcostestimage"
 }
 
+# you can find the latest value in https://github.com/openshift/installer/blob/master/data/data/rhcos.json
+variable "azure_rhcos_image_url" {
+  type    = string
+  default = "https://rhcos.blob.core.windows.net/imagebucket/rhcos-43.80.20191002.1-azure.x86_64.vhd"
+  # default = "https://openshifttechpreview.blob.core.windows.net/rhcos/rhcos-410.8.20190504.0-azure.vhd"
+}
+
 variable "bootstrap_complete" {
   type    = bool
   default = false
+}
+
+variable "openshift_version" {
+  type    = string
+  default = "4.2.2"
 }

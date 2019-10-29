@@ -78,7 +78,7 @@ resource "null_resource" "generate_ignition" {
     "local_file.openshift-cluster-api_master-machines",
     "local_file.openshift-cluster-api_worker-machineset",
     "local_file.ingresscontroller-default",
-    # "local_file.ingress-service-default",
+    "local_file.ingress-service-default",
     "local_file.cloud-creds-secret-kube-system",
     "local_file.cluster-scheduler-02-config",
   ]
@@ -88,7 +88,9 @@ resource "null_resource" "generate_ignition" {
   provisioner "local-exec" {
     command = <<EOF
 rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-*
-rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-*
+# rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-*
+cp -Rp ${local.installer_workspace}/openshift/ ${local.installer_workspace}/_openshift/
+cp -Rp ${local.installer_workspace}/manifests/ ${local.installer_workspace}/_manifests/
 ${local.installer_workspace}/openshift-install --dir=${local.installer_workspace} create ignition-configs
 ${local.installer_workspace}/jq '.infraID="${var.cluster_id}"' ${local.installer_workspace}/metadata.json > /tmp/metadata.json
 mv /tmp/metadata.json ${local.installer_workspace}/metadata.json
@@ -97,9 +99,9 @@ EOF
 }
 
 resource "azurerm_storage_blob" "ignition-bootstrap" {
-  name   = "bootstrap.ign"
-  source = "${local.installer_workspace}/bootstrap.ign"
-  # resource_group_name    = "${var.resource_group_name}"
+  name                   = "bootstrap.ign"
+  source                 = "${local.installer_workspace}/bootstrap.ign"
+  resource_group_name    = "${var.resource_group_name}"
   storage_account_name   = "${var.storage_account_name}"
   storage_container_name = "${var.storage_container_name}"
   type                   = "block"
@@ -109,9 +111,9 @@ resource "azurerm_storage_blob" "ignition-bootstrap" {
 }
 
 resource "azurerm_storage_blob" "ignition-master" {
-  name   = "master.ign"
-  source = "${local.installer_workspace}/master.ign"
-  # resource_group_name    = "${var.resource_group_name}"
+  name                   = "master.ign"
+  source                 = "${local.installer_workspace}/master.ign"
+  resource_group_name    = "${var.resource_group_name}"
   storage_account_name   = "${var.storage_account_name}"
   storage_container_name = "${var.storage_container_name}"
   type                   = "block"
@@ -121,9 +123,9 @@ resource "azurerm_storage_blob" "ignition-master" {
 }
 
 resource "azurerm_storage_blob" "ignition-worker" {
-  name   = "worker.ign"
-  source = "${local.installer_workspace}/worker.ign"
-  # resource_group_name    = "${var.resource_group_name}"
+  name                   = "worker.ign"
+  source                 = "${local.installer_workspace}/worker.ign"
+  resource_group_name    = "${var.resource_group_name}"
   storage_account_name   = "${var.storage_account_name}"
   storage_container_name = "${var.storage_container_name}"
   type                   = "block"

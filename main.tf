@@ -3,6 +3,7 @@ provider "azurerm" {
   client_id       = var.azure_client_id
   client_secret   = var.azure_client_secret
   tenant_id       = var.azure_tenant_id
+  version         = "<= 1.33"
 }
 
 resource "random_string" "tag" {
@@ -80,8 +81,9 @@ module "ignition" {
   azure_tenant_id               = var.azure_tenant_id
   azure_storage_azurefile_name  = module.infrastructure.azure_storage_azurefile_name
   azure_rhcos_image_id          = var.azure_rhcos_image_id
-  controlplane_vnet_id          = module.infrastructure.controlplane_vnet_id
-  worker_vnet_id                = module.infrastructure.worker_vnet_id
+  controlplane_vnet_name        = module.infrastructure.controlplane_vnet_name
+  worker_vnet_name              = module.infrastructure.worker_vnet_name
+  apps_lb_pip_ip                = module.infrastructure.apps_lb_pip_ip
 }
 
 module "bootstrap" {
@@ -128,29 +130,29 @@ module "controlplane" {
   backend_address_pool_id = module.infrastructure.internal_lb_controlplane_pool_id
 }
 
-module "worker" {
-  source = "./modules/5_nodes"
-  dependson = [
-    "${module.infrastructure.module_completed}",
-    "${module.dns.module_completed}",
-    "${module.ignition.module_completed}",
-    "${module.bootstrap.module_completed}"
-  ]
-  instance_count          = var.openshift_worker_count
-  resource_group_name     = module.infrastructure.resource_group_name
-  cluster_id              = local.cluster_id
-  azure_region            = var.azure_region
-  vm_size                 = var.azure_worker_vm_type
-  vm_image                = var.azure_rhcos_image_id
-  identity                = module.infrastructure.user_assigned_identity_id
-  ignition                = module.ignition.worker_ignition
-  boot_diag_blob_endpoint = module.infrastructure.boot_diag_blob_endpoint
-  network_intreface_id    = module.infrastructure.worker_network_interface_id
-  os_volume_size          = var.azure_worker_root_volume_size
-  node_type               = "worker"
-  network_interface_ids   = module.infrastructure.worker_network_interface_id
-  backend_address_pool_id = module.infrastructure.worker_lb_backend_pool_id
-}
+# module "worker" {
+#   source = "./modules/5_nodes"
+#   dependson = [
+#     "${module.infrastructure.module_completed}",
+#     "${module.dns.module_completed}",
+#     "${module.ignition.module_completed}",
+#     "${module.bootstrap.module_completed}"
+#   ]
+#   instance_count          = var.openshift_worker_count
+#   resource_group_name     = module.infrastructure.resource_group_name
+#   cluster_id              = local.cluster_id
+#   azure_region            = var.azure_region
+#   vm_size                 = var.azure_worker_vm_type
+#   vm_image                = var.azure_rhcos_image_id
+#   identity                = module.infrastructure.user_assigned_identity_id
+#   ignition                = module.ignition.worker_ignition
+#   boot_diag_blob_endpoint = module.infrastructure.boot_diag_blob_endpoint
+#   network_intreface_id    = module.infrastructure.worker_network_interface_id
+#   os_volume_size          = var.azure_worker_root_volume_size
+#   node_type               = "worker"
+#   network_interface_ids   = module.infrastructure.worker_network_interface_id
+#   backend_address_pool_id = module.infrastructure.worker_lb_backend_pool_id
+# }
 
 
 module "deploy" {
@@ -161,7 +163,7 @@ module "deploy" {
     "${module.ignition.module_completed}",
     "${module.bootstrap.module_completed}",
     "${module.controlplane.module_completed}",
-    "${module.worker.module_completed}",
+    # "${module.worker.module_completed}",
   ]
   azure_region        = var.azure_region
   resource_group_name = module.infrastructure.resource_group_name

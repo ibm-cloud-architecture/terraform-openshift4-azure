@@ -71,37 +71,40 @@ resource "azurerm_storage_share" "azurefile" {
 }
 
 
-# # RHCOS image
+# RHCOS image
+resource "azurerm_storage_account" "rhcos" {
+  name                     = "rhcosimage${local.cluster_nr}"
+  resource_group_name      = azurerm_resource_group.openshift.name
+  location                 = var.azure_region
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
 
-# resource "azurerm_storage_account" "rhcos" {
-#   name                     = "rhcosimage"
-#   resource_group_name      = azurerm_resource_group.openshift.name
-#   location                 = var.azure_region
-#   account_tier             = "Standard"
-#   account_replication_type = "LRS"
-# }
+resource "azurerm_storage_container" "vhd" {
+  name                 = "vhd"
+  resource_group_name  = azurerm_resource_group.openshift.name
+  storage_account_name = azurerm_storage_account.rhcos.name
+}
 
-# resource "azurerm_storage_container" "vhd" {
-#   name                  = "rhcosiamge"
-#   storage_account_name  = azurerm_storage_account.rhcos.name
-#   container_access_type = "private"
-# }
+resource "azurerm_storage_blob" "rhcos_image" {
+  name                   = "rhcos.vhd"
+  resource_group_name    = azurerm_resource_group.openshift.name
+  storage_account_name   = azurerm_storage_account.rhcos.name
+  storage_container_name = azurerm_storage_container.vhd.name
+  type                   = "block"
+  source_uri             = var.azure_image_url
+  metadata               = map("source_uri", var.azure_image_url)
+  attempts               = 2
+}
 
-# resource "azurerm_storage_blob" "image_blob" {
-#   name                   = "rhcostestimage"
-#   storage_account_name   = azurerm_storage_account.rhcos.name
-#   storage_container_name = azurerm_storage_container.vhd.name
-#   type                   = "Block"
-#   source_uri             = "https://openshifttechpreview.blob.core.windows.net/rhcos/rhcos-410.8.20190504.0-azure.vhd"
-# }
+resource "azurerm_image" "cluster" {
+  name                = var.cluster_id
+  resource_group_name = azurerm_resource_group.openshift.name
+  location            = var.azure_region
 
-# #az image create --resource-group rhcos_images --name rhcostestimage --os-type Linux --storage-sku Premium_LRS --source "$RHCOS_VHD" --location centralus
-# resource "azurerm_image" "rhcosimage" {
-#   name                = "rhcosimage"
-#   location            = var.azure_region
-#   resource_group_name = azurerm_resource_group.openshift.name
-#   os_disk {
-#     os_type  = "Linux"
-#     blob_uri = "${azurerm_storage_blob.image_blob.url}.vhd"
-#   }
-# }
+  os_disk {
+    os_type  = "Linux"
+    os_state = "Generalized"
+    blob_uri = azurerm_storage_blob.rhcos_image.url
+  }
+}

@@ -23,6 +23,10 @@ echo "patching image registry route"
 ${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"defaultRoute":true}}'
 echo "adding user to cluster role"
 ${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig adm policy add-cluster-role-to-user system:azure-cloud-provider-filestorage system:serviceaccount:kube-system:persistent-volume-binder
+echo "deleting default ingresscontroller"
+${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig delete ingresscontroller default -n openshift-ingress-operator
+${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig create -f ${local.installer_workspace}/configs/99_default_ingress_controller.yaml
+${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig create -f ${local.installer_workspace}/configs/99_ingress-service-default.yaml
 ${local.installer_workspace}/openshift-install --dir=${local.installer_workspace} wait-for install-complete --log-level debug
 EOF
   }

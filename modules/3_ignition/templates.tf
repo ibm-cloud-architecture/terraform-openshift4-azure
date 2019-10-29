@@ -110,7 +110,7 @@ data:
     \"\",\n\t\"aadClientSecret\": \"\",\n\t\"aadClientCertPath\": \"\",\n\t\"aadClientCertPassword\":
     \"\",\n\t\"useManagedIdentityExtension\": true,\n\t\"userAssignedIdentityID\":
     \"\",\n\t\"subscriptionId\": \"${var.azure_subscription_id}\",\n\t\"resourceGroup\":
-    \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.controlplane_vnet_id}\",\n\t\"vnetResourceGroup\":
+    \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.worker_vnet_name}\",\n\t\"vnetResourceGroup\":
     \"${var.cluster_id}-rg\",\n\t\"subnetName\": \"${var.cluster_id}-node-subnet\",\n\t\"securityGroupName\":
     \"${var.cluster_id}-node-nsg\",\n\t\"routeTableName\": \"${var.cluster_id}-node-routetable\",\n\t\"primaryAvailabilitySetName\":
     \"\",\n\t\"vmType\": \"\",\n\t\"primaryScaleSetName\": \"\",\n\t\"cloudProviderBackoff\":
@@ -225,7 +225,7 @@ spec:
       userDataSecret:
         name: master-user-data
       vmSize: ${var.master_vm_type}
-      vnet: ${var.controlplane_vnet_id}
+      vnet: ${var.controlplane_vnet_name}
       zone: "${count.index + 1}"
 status: {}
 EOF
@@ -306,7 +306,7 @@ spec:
           userDataSecret:
             name: worker-user-data
           vmSize: ${var.worker_vm_type}
-          vnet: ${var.worker_vnet_id}
+          vnet: ${var.worker_vnet_name}
           zone: "${count.index + 1}"
 status:
   replicas: 0
@@ -335,14 +335,15 @@ metadata:
   namespace: openshift-ingress-operator
 spec:
   endpointPublishingStrategy:
-    type: HostNetwork
+    type: LoadBalanceService
   replicas: 2
 EOF
 }
 
+
 resource "local_file" "ingresscontroller-default" {
   content  = data.template_file.ingresscontroller-default.rendered
-  filename = "${local.installer_workspace}/openshift/99_default_ingress_controller.yaml"
+  filename = "${local.installer_workspace}/configs/99_default_ingress_controller.yaml"
   depends_on = [
     "null_resource.dependency",
     "null_resource.download_binaries",
@@ -350,33 +351,37 @@ resource "local_file" "ingresscontroller-default" {
   ]
 }
 
-# data "template_file" "ingress-service-default" {
-#   template = <<EOF
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   annotations:
-#     service.beta.kubernetes.io/azure-load-balancer-resource-group: ${var.cluster_id}-rg
-#   name: azure-load-balancer
-# spec:
-#   type: LoadBalancer
-#   ports:
-#   - port: 80
-#   - port: 443
-#   selector:
-#     ingresscontroller.operator.openshift.io/deployment-ingresscontroller: default
-# EOF
-# }
-#
-# resource "local_file" "ingress-service-default" {
-#   content = data.template_file.ingress-service-default.rendered
-#   filename = "${local.installer_workspace}/openshift/99_ingress-service-default.yaml"
-#   depends_on = [
-#     "null_resource.dependency",
-#     "null_resource.download_binaries",
-#     "null_resource.generate_manifests",
-#   ]
-# }
+data "template_file" "ingress-service-default" {
+  template = <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: ${var.resource_group_name}
+  name: azure-load-balancer
+  namespace: openshift-ingress
+spec:
+  loadBalancerIP: ${var.apps_lb_pip_ip}
+  type: LoadBalancer
+  ports:
+  - port: 80
+    name: http
+  - port: 443
+    name: https
+  selector:
+    ingresscontroller.operator.openshift.io/deployment-ingresscontroller: default
+EOF
+}
+
+resource "local_file" "ingress-service-default" {
+  content  = data.template_file.ingress-service-default.rendered
+  filename = "${local.installer_workspace}/configs/99_ingress-service-default.yaml"
+  depends_on = [
+    "null_resource.dependency",
+    "null_resource.download_binaries",
+    "null_resource.generate_manifests",
+  ]
+}
 
 data "template_file" "cloud-creds-secret-kube-system" {
   template = <<EOF

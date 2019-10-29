@@ -178,74 +178,74 @@ resource "azurerm_lb_probe" "public_lb_bootstrap" {
 }
 
 
-resource "azurerm_lb" "worker_public" {
-  sku                 = "Standard"
-  name                = "${var.cluster_id}-apps-lb"
-  resource_group_name = "${azurerm_resource_group.openshift.name}"
-  location            = "${var.azure_region}"
+# resource "azurerm_lb" "worker_public" {
+#   sku                 = "Standard"
+#   name                = "${var.cluster_id}-apps-lb"
+#   resource_group_name = "${azurerm_resource_group.openshift.name}"
+#   location            = "${var.azure_region}"
 
-  frontend_ip_configuration {
-    name                 = "${local.app_lb_frontend_ip_configuration_name}"
-    public_ip_address_id = "${azurerm_public_ip.worker_public_ip.id}"
-  }
-}
+#   frontend_ip_configuration {
+#     name                 = "${local.app_lb_frontend_ip_configuration_name}"
+#     public_ip_address_id = "${azurerm_public_ip.worker_public_ip.id}"
+#   }
+# }
 
 
-resource "azurerm_lb_backend_address_pool" "worker_public_lb_pool" {
-  resource_group_name = "${azurerm_resource_group.openshift.name}"
-  loadbalancer_id     = "${azurerm_lb.worker_public.id}"
-  name                = "${var.cluster_id}-apps-lb-routers"
-}
+# resource "azurerm_lb_backend_address_pool" "worker_public_lb_pool" {
+#   resource_group_name = "${azurerm_resource_group.openshift.name}"
+#   loadbalancer_id     = "${azurerm_lb.worker_public.id}"
+#   name                = "${var.cluster_id}-apps-lb-routers"
+# }
 
-resource "azurerm_lb_rule" "public_lb_rule_http" {
-  name                           = "tcp-80"
-  resource_group_name            = "${azurerm_resource_group.openshift.name}"
-  protocol                       = "Tcp"
-  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
-  loadbalancer_id                = "${azurerm_lb.worker_public.id}"
-  frontend_port                  = 80
-  backend_port                   = 80
-  frontend_ip_configuration_name = "${local.app_lb_frontend_ip_configuration_name}"
-  enable_floating_ip             = false
-  idle_timeout_in_minutes        = 30
-  load_distribution              = "Default"
-  probe_id                       = "${azurerm_lb_probe.public_lb_http.id}"
-}
+# resource "azurerm_lb_rule" "public_lb_rule_http" {
+#   name                           = "tcp-80"
+#   resource_group_name            = "${azurerm_resource_group.openshift.name}"
+#   protocol                       = "Tcp"
+#   backend_address_pool_id        = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
+#   loadbalancer_id                = "${azurerm_lb.worker_public.id}"
+#   frontend_port                  = 80
+#   backend_port                   = 80
+#   frontend_ip_configuration_name = "${local.app_lb_frontend_ip_configuration_name}"
+#   enable_floating_ip             = false
+#   idle_timeout_in_minutes        = 30
+#   load_distribution              = "Default"
+#   probe_id                       = "${azurerm_lb_probe.public_lb_http.id}"
+# }
 
-resource "azurerm_lb_rule" "public_lb_rule_https" {
-  name                           = "tcp-443"
-  resource_group_name            = "${azurerm_resource_group.openshift.name}"
-  protocol                       = "Tcp"
-  backend_address_pool_id        = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
-  loadbalancer_id                = "${azurerm_lb.worker_public.id}"
-  frontend_port                  = 443
-  backend_port                   = 443
-  frontend_ip_configuration_name = "${local.app_lb_frontend_ip_configuration_name}"
-  enable_floating_ip             = false
-  idle_timeout_in_minutes        = 30
-  load_distribution              = "Default"
-  probe_id                       = "${azurerm_lb_probe.public_lb_http.id}"
-}
+# resource "azurerm_lb_rule" "public_lb_rule_https" {
+#   name                           = "tcp-443"
+#   resource_group_name            = "${azurerm_resource_group.openshift.name}"
+#   protocol                       = "Tcp"
+#   backend_address_pool_id        = "${azurerm_lb_backend_address_pool.worker_public_lb_pool.id}"
+#   loadbalancer_id                = "${azurerm_lb.worker_public.id}"
+#   frontend_port                  = 443
+#   backend_port                   = 443
+#   frontend_ip_configuration_name = "${local.app_lb_frontend_ip_configuration_name}"
+#   enable_floating_ip             = false
+#   idle_timeout_in_minutes        = 30
+#   load_distribution              = "Default"
+#   probe_id                       = "${azurerm_lb_probe.public_lb_http.id}"
+# }
 
-resource "azurerm_lb_probe" "public_lb_http" {
-  name                = "probe-http"
-  resource_group_name = "${azurerm_resource_group.openshift.name}"
-  interval_in_seconds = 10
-  number_of_probes    = 3
-  loadbalancer_id     = "${azurerm_lb.worker_public.id}"
-  port                = 80
-  protocol            = "TCP"
-}
+# resource "azurerm_lb_probe" "public_lb_http" {
+#   name                = "probe-http"
+#   resource_group_name = "${azurerm_resource_group.openshift.name}"
+#   interval_in_seconds = 10
+#   number_of_probes    = 3
+#   loadbalancer_id     = "${azurerm_lb.worker_public.id}"
+#   port                = 80
+#   protocol            = "TCP"
+# }
 
-resource "azurerm_lb_probe" "public_lb_https" {
-  name                = "probe-https"
-  resource_group_name = "${azurerm_resource_group.openshift.name}"
-  interval_in_seconds = 10
-  number_of_probes    = 3
-  loadbalancer_id     = "${azurerm_lb.worker_public.id}"
-  port                = 443
-  protocol            = "TCP"
-}
+# resource "azurerm_lb_probe" "public_lb_https" {
+#   name                = "probe-https"
+#   resource_group_name = "${azurerm_resource_group.openshift.name}"
+#   interval_in_seconds = 10
+#   number_of_probes    = 3
+#   loadbalancer_id     = "${azurerm_lb.worker_public.id}"
+#   port                = 443
+#   protocol            = "TCP"
+# }
 
 # MASTER VM NETWORKING
 resource "azurerm_network_interface" "master" {
@@ -311,18 +311,18 @@ resource "azurerm_network_interface_backend_address_pool_association" "internal_
 
 
 # WORKER VM NETWORKING
-resource "azurerm_network_interface" "worker" {
-  count               = "${var.worker_count}"
-  name                = "${var.cluster_id}-worker${count.index}-nic"
-  location            = "${var.azure_region}"
-  resource_group_name = "${var.cluster_id}-rg"
+# resource "azurerm_network_interface" "worker" {
+#   count               = "${var.worker_count}"
+#   name                = "${var.cluster_id}-worker${count.index}-nic"
+#   location            = "${var.azure_region}"
+#   resource_group_name = "${var.cluster_id}-rg"
 
-  ip_configuration {
-    subnet_id                     = "${azurerm_subnet.node_subnet.id}"
-    name                          = "${local.ip_configuration_name}"
-    private_ip_address_allocation = "Dynamic"
-  }
-}
+#   ip_configuration {
+#     subnet_id                     = "${azurerm_subnet.node_subnet.id}"
+#     name                          = "${local.ip_configuration_name}"
+#     private_ip_address_allocation = "Dynamic"
+#   }
+# }
 
 # resource "azurerm_network_interface_backend_address_pool_association" "worker" {
 #   count                   = "${var.worker_count}"

@@ -78,7 +78,7 @@ resource "azurerm_virtual_machine" "node" {
 # we add the servers to the backend server pool after bootstrap is complete otherwise
 # it could ask for bootstrap information from itself and fail.
 resource "azurerm_network_interface_backend_address_pool_association" "node_association" {
-  count                   = var.instance_count
+  count                   = var.node_type == "master" ? var.instance_count : 0
   network_interface_id    = element(var.network_interface_ids, count.index)
   backend_address_pool_id = var.backend_address_pool_id
   ip_configuration_name   = local.ip_configuration_name

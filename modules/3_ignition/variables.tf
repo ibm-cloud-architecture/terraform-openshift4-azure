@@ -121,10 +121,14 @@ variable "azure_rhcos_image_id" {
   type = string
 }
 
-variable "controlplane_vnet_id" {
+variable "controlplane_vnet_name" {
   type = string
 }
 
-variable "worker_vnet_id" {
+variable "worker_vnet_name" {
+  type = string
+}
+
+variable "apps_lb_pip_ip" {
   type = string
 }
