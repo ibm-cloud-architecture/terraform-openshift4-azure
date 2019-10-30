@@ -44,7 +44,12 @@ variable "public_ssh_key" {
 
 variable "openshift_installer_url" {
   type    = string
-  default = "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/"
+  default = "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/"
+}
+
+variable "openshift_version" {
+  type    = string
+  default = "latest"
 }
 
 variable "cluster_id" {
@@ -132,3 +137,4 @@ variable "worker_vnet_name" {
 variable "apps_lb_pip_ip" {
   type = string
 }
+

@@ -5,7 +5,8 @@ resource "null_resource" "dependency" {
 }
 
 locals {
-  installer_workspace = "${path.root}/installer-files"
+  installer_workspace     = "${path.root}/installer-files"
+  openshift_installer_url = "${var.openshift_installer_url}/${var.openshift_version}"
 }
 
 resource "null_resource" "download_binaries" {
@@ -15,16 +16,16 @@ resource "null_resource" "download_binaries" {
 mkdir ${local.installer_workspace}
 case $(uname -s) in
   Darwin)
-    wget -r -l1 -np -nd -q ${var.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-install-mac-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${local.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-install-mac-4*.tar.gz'
     tar zxvf ${local.installer_workspace}/openshift-install-mac-4*.tar.gz -C ${local.installer_workspace}
-    wget -r -l1 -np -nd -q ${var.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-client-mac-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${local.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-client-mac-4*.tar.gz'
     tar zxvf ${local.installer_workspace}/openshift-client-mac-4*.tar.gz -C ${local.installer_workspace}
     wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64 -O ${local.installer_workspace}/jq > /dev/null 2>&1\
     ;;
   Linux)
     wget -r -l1 -np -nd -q ${local.installer_workspace} -P ${local.installer_workspace} -A 'openshift-install-linux-4*.tar.gz'
     tar zxvf ${local.installer_workspace}/openshift-install-linux-4*.tar.gz -C ${local.installer_workspace}
-    wget -r -l1 -np -nd -q ${var.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-client-linux-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${local.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-client-linux-4*.tar.gz'
     tar zxvf ${local.installer_workspace}/openshift-client-linux-4*.tar.gz -C ${local.installer_workspace}
     wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O ${local.installer_workspace}/jq
     ;;
@@ -83,8 +84,6 @@ resource "null_resource" "generate_ignition" {
     "local_file.cluster-scheduler-02-config",
   ]
 
-  # remove worker-machineset config files for now until images can be created dynamically with terraform
-  # https://github.com/terraform-providers/terraform-provider-azurerm/issues/4361
   provisioner "local-exec" {
     command = <<EOF
 rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-*

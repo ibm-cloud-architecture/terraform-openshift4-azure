@@ -107,4 +107,10 @@ resource "azurerm_image" "cluster" {
     os_state = "Generalized"
     blob_uri = azurerm_storage_blob.rhcos_image.url
   }
+
+  lifecycle {
+    ignore_changes = [
+      "os_disk"
+    ]
+  }
 }

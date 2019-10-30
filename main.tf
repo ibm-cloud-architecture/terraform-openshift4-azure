@@ -3,7 +3,10 @@ provider "azurerm" {
   client_id       = var.azure_client_id
   client_secret   = var.azure_client_secret
   tenant_id       = var.azure_tenant_id
-  version         = "<= 1.33"
+  # need version 1.33 until a newer version can handle creating azurerm_images with
+  # hyperVGeneration property
+  # https://github.com/terraform-providers/terraform-provider-azurerm/issues/4361
+  version = "<= 1.33"
 }
 
 resource "random_string" "tag" {
@@ -17,12 +20,13 @@ locals {
 }
 
 module "infrastructure" {
-  source       = "./modules/1_infrastructure"
-  cluster_id   = local.cluster_id
-  azure_region = var.azure_region
-  machine_cidr = var.machine_cidr
-  master_count = var.openshift_master_count
-  worker_count = var.openshift_worker_count
+  source          = "./modules/1_infrastructure"
+  cluster_id      = local.cluster_id
+  azure_region    = var.azure_region
+  machine_cidr    = var.machine_cidr
+  master_count    = var.openshift_master_count
+  worker_count    = var.openshift_worker_count
+  azure_image_url = var.azure_rhcos_image_url
 }
 
 module "dns" {
@@ -54,6 +58,7 @@ module "ignition" {
   ]
 
   base_domain                   = var.base_domain
+  openshift_version             = var.openshift_version
   master_count                  = var.openshift_master_count
   cluster_name                  = var.openshift_cluster_name
   cluster_network_cidr          = var.openshift_cluster_network_cidr
@@ -80,7 +85,7 @@ module "ignition" {
   azure_client_secret           = var.azure_client_secret
   azure_tenant_id               = var.azure_tenant_id
   azure_storage_azurefile_name  = module.infrastructure.azure_storage_azurefile_name
-  azure_rhcos_image_id          = var.azure_rhcos_image_id
+  azure_rhcos_image_id          = module.infrastructure.cluster_image_id
   controlplane_vnet_name        = module.infrastructure.controlplane_vnet_name
   worker_vnet_name              = module.infrastructure.worker_vnet_name
   apps_lb_pip_ip                = module.infrastructure.apps_lb_pip_ip
@@ -97,7 +102,7 @@ module "bootstrap" {
   cluster_id              = local.cluster_id
   azure_region            = var.azure_region
   vm_size                 = var.azure_bootstrap_vm_type
-  vm_image                = var.azure_rhcos_image_id
+  vm_image                = module.infrastructure.cluster_image_id
   identity                = module.infrastructure.user_assigned_identity_id
   ignition                = module.ignition.bootstrap_ignition
   boot_diag_blob_endpoint = module.infrastructure.boot_diag_blob_endpoint
@@ -119,7 +124,7 @@ module "controlplane" {
   cluster_id              = local.cluster_id
   azure_region            = var.azure_region
   vm_size                 = var.azure_master_vm_type
-  vm_image                = var.azure_rhcos_image_id
+  vm_image                = module.infrastructure.cluster_image_id
   identity                = module.infrastructure.user_assigned_identity_id
   ignition                = module.ignition.master_ignition
   boot_diag_blob_endpoint = module.infrastructure.boot_diag_blob_endpoint
@@ -143,7 +148,7 @@ module "controlplane" {
 #   cluster_id              = local.cluster_id
 #   azure_region            = var.azure_region
 #   vm_size                 = var.azure_worker_vm_type
-#   vm_image                = var.azure_rhcos_image_id
+#   vm_image                = module.infrastructure.cluster_image_id
 #   identity                = module.infrastructure.user_assigned_identity_id
 #   ignition                = module.ignition.worker_ignition
 #   boot_diag_blob_endpoint = module.infrastructure.boot_diag_blob_endpoint
