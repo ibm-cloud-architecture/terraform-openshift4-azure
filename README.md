@@ -75,7 +75,7 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_master_root_volume_size         | Size of master node root volume                              | 1024            | string |
 | azure_worker_root_volume_size         | Size of worker node root volume                              | 128             | string |
 | azure_infra_root_volume_size         | Size of infra node root volume                              | 128             | string |
-| azure_rhcos_image_url                  | URL of the CoreOS image. Can be found [here](https://github.com/openshift/installer/blob/master/data/data/rhcos.json)                      | https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20190823.0.vhd | string |
+| azure_rhcos_image_url                  | URL of the CoreOS image. Can be found [here](https://github.com/openshift/installer/blob/master/data/data/rhcos.json)                      | [URL](https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20190823.0.vhd) | string |
 
 
 
