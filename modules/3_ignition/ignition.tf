@@ -89,9 +89,6 @@ resource "null_resource" "generate_ignition" {
   provisioner "local-exec" {
     command = <<EOF
 rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-*
-# rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-*
-cp -Rp ${local.installer_workspace}/openshift/ ${local.installer_workspace}/_openshift/
-cp -Rp ${local.installer_workspace}/manifests/ ${local.installer_workspace}/_manifests/
 ${local.installer_workspace}/openshift-install --dir=${local.installer_workspace} create ignition-configs
 ${local.installer_workspace}/jq '.infraID="${var.cluster_id}"' ${local.installer_workspace}/metadata.json > /tmp/metadata.json
 mv /tmp/metadata.json ${local.installer_workspace}/metadata.json
