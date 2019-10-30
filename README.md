@@ -10,7 +10,7 @@ We use different Terraform modules to achieve these results:
 
 1. `modules/1_infrastructure` - Creates the network infrastrucure to deploy OpenShift
    * Creates a resource group	
-   * git commCreates a VNET and subnets
+   * Creates a VNET and subnets
    * Creates network security groups to handle traffic
    * Creates LoadBalancers and assigns node pools
    * Creates storage for ignition and azure-file storageclass
@@ -89,15 +89,15 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 2. Create your `terraform.tfvars` file
 
 3. Deploy with terraform
-	```bash
+  ```bash
   $ terraform init
   $ terraform plan
   $ terraform apply
   ```
 4.  Destroy bootstrap node
-	```bash
-	$ TF_VAR_bootstrap_complete=true terraform apply
-	```
+  ```bash
+  $ TF_VAR_bootstrap_complete=true terraform apply
+  ```
 5.  To access your cluster
 	```bash
    $ export KUBECONFIG=$PWD/installer-files/auth/kubeconfig
