@@ -76,6 +76,10 @@ variable "node_count" {
   type = string
 }
 
+variable "infra_count" {
+  type = string
+}
+
 variable "etcd_ip_addresses" {
   type = list(string)
 }
@@ -88,11 +92,20 @@ variable "master_vm_type" {
   type = string
 }
 
+variable "infra_vm_type" {
+  type = string
+}
+
 variable "worker_vm_type" {
   type = string
 }
 
 variable "worker_os_disk_size" {
+  type    = string
+  default = 128
+}
+
+variable "infra_os_disk_size" {
   type    = string
   default = 128
 }

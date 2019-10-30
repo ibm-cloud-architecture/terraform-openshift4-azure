@@ -74,11 +74,14 @@ module "ignition" {
   storage_container_name        = module.infrastructure.storage_container_name
   storage_account_sas           = module.infrastructure.storage_account_sas
   node_count                    = var.openshift_worker_count
+  infra_count                   = var.openshift_infra_count
   etcd_ip_addresses             = module.infrastructure.master_ip_addresses
   azure_region                  = var.azure_region
   worker_vm_type                = var.azure_worker_vm_type
+  infra_vm_type                 = var.azure_infra_vm_type
   master_vm_type                = var.azure_master_vm_type
   worker_os_disk_size           = var.azure_worker_root_volume_size
+  infra_os_disk_size            = var.azure_infra_root_volume_size
   master_os_disk_size           = var.azure_master_root_volume_size
   azure_subscription_id         = var.azure_subscription_id
   azure_client_id               = var.azure_client_id

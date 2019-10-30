@@ -78,10 +78,12 @@ resource "null_resource" "generate_ignition" {
     "local_file.etcd-host-service-endpoints",
     "local_file.openshift-cluster-api_master-machines",
     "local_file.openshift-cluster-api_worker-machineset",
+    "local_file.openshift-cluster-api_infra-machineset",
     "local_file.ingresscontroller-default",
     "local_file.ingress-service-default",
     "local_file.cloud-creds-secret-kube-system",
     "local_file.cluster-scheduler-02-config",
+    "local_file.cluster-monitoring-configmap",
   ]
 
   provisioner "local-exec" {

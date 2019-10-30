@@ -45,9 +45,8 @@ while ! ${local.installer_workspace}/oc --config=${local.installer_workspace}/au
   echo "waiting for imageregistry"
   sleep 5;
 done
-echo "updating image registry storage"
-${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"storage":{"pvc":{"claim":""}}}}'
-${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec":{"defaultRoute":true}}'
+echo "updating image registry"
+${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{"spec": {"storage": {"pvc": {"claim": ""}},"defaultRoute": true,"nodeSelector": {"node-role.kubernetes.io/infra": ""}}}'
 ${local.installer_workspace}/oc --config=${local.installer_workspace}/auth/kubeconfig adm policy add-cluster-role-to-user system:azure-cloud-provider-filestorage system:serviceaccount:kube-system:persistent-volume-binder
 EOF
   }

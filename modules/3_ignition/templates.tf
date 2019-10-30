@@ -324,6 +324,88 @@ resource "local_file" "openshift-cluster-api_worker-machineset" {
   ]
 }
 
+data "template_file" "openshift-cluster-api_infra-machineset" {
+  count    = "${var.infra_count}"
+  template = <<EOF
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  creationTimestamp: null
+  labels:
+    machine.openshift.io/cluster-api-cluster: ${var.cluster_id}
+    machine.openshift.io/cluster-api-machine-role: infra
+    machine.openshift.io/cluster-api-machine-type: infra
+  name: ${var.cluster_id}-infra-${var.azure_region}${count.index + 1}
+  namespace: openshift-machine-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-cluster: ${var.cluster_id}
+      machine.openshift.io/cluster-api-machineset: ${var.cluster_id}-infra-${var.azure_region}${count.index + 1}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        machine.openshift.io/cluster-api-cluster: ${var.cluster_id}
+        machine.openshift.io/cluster-api-machine-role: infra
+        machine.openshift.io/cluster-api-machine-type: infra
+        machine.openshift.io/cluster-api-machineset: ${var.cluster_id}-infra-${var.azure_region}${count.index + 1}
+    spec:
+      metadata:
+        creationTimestamp: null
+        labels:
+          node-role.kubernetes.io/infra: ""
+      providerSpec:
+        value:
+          apiVersion: azureproviderconfig.openshift.io/v1beta1
+          credentialsSecret:
+            name: azure-cloud-credentials
+            namespace: openshift-machine-api
+          image:
+            offer: ""
+            publisher: ""
+            resourceID: /resourceGroups/${var.cluster_id}-rg/providers/Microsoft.Compute/images/${var.cluster_id}
+            sku: ""
+            version: ""
+          internalLoadBalancer: ""
+          kind: AzureMachineProviderSpec
+          location: ${var.azure_region}
+          managedIdentity: ${var.cluster_id}-identity
+          metadata:
+            creationTimestamp: null
+          natRule: null
+          networkResourceGroup: ${var.cluster_id}-rg
+          osDisk:
+            diskSizeGB: ${var.infra_os_disk_size}
+            managedDisk:
+              storageAccountType: Premium_LRS
+            osType: Linux
+          publicIP: false
+          publicLoadBalancer: ""
+          resourceGroup: ${var.cluster_id}-rg
+          sshPrivateKey: ""
+          sshPublicKey: ""
+          subnet: ${var.cluster_id}-worker-subnet
+          userDataSecret:
+            name: worker-user-data
+          vmSize: ${var.infra_vm_type}
+          vnet: ${var.worker_vnet_name}
+          zone: "${count.index + 1}"
+EOF
+}
+
+resource "local_file" "openshift-cluster-api_infra-machineset" {
+  count    = var.infra_count
+  content  = element(data.template_file.openshift-cluster-api_infra-machineset.*.rendered, count.index)
+  filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_infra-machineset-${count.index}.yaml"
+  depends_on = [
+    "null_resource.dependency",
+    "null_resource.download_binaries",
+    "null_resource.generate_manifests",
+  ]
+}
+
 data "template_file" "ingresscontroller-default" {
   template = <<EOF
 apiVersion: operator.openshift.io/v1
@@ -337,6 +419,10 @@ spec:
   endpointPublishingStrategy:
     type: LoadBalanceService
   replicas: 2
+  nodePlacement:
+    nodeSelector:
+      matchLabels:
+        node-role.kubernetes.io/infra: ""
 EOF
 }
 
@@ -508,6 +594,50 @@ EOF
 resource "local_file" "image-registry-pvc" {
   content  = data.template_file.image-registry-pvc.rendered
   filename = "${local.installer_workspace}/openshift/99_image-registry-pvc.yml"
+  depends_on = [
+    "null_resource.dependency",
+    "null_resource.download_binaries",
+    "null_resource.generate_manifests",
+  ]
+}
+
+
+data "template_file" "cluster-monitoring-configmap" {
+  template = <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |+
+    alertmanagerMain:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+    prometheusK8s:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+    prometheusOperator:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+    grafana:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+    k8sPrometheusAdapter:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+    kubeStateMetrics:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+    telemeterClient:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+EOF
+}
+
+resource "local_file" "cluster-monitoring-configmap" {
+  content  = data.template_file.cluster-monitoring-configmap.rendered
+  filename = "${local.installer_workspace}/openshift/99_cluster-monitoring-configmap.yml"
   depends_on = [
     "null_resource.dependency",
     "null_resource.download_binaries",
