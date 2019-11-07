@@ -1,0 +1,44 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:ibm-patch-cluster-storage
+rules:
+- apiGroups: ['imageregistry.operator.openshift.io']
+  resources: ['configs']
+  verbs:     ['get','patch']
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: system:ibm-patch-cluster-storage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:ibm-patch-cluster-storage
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: openshift-image-registry
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ibm-configure-image-registry
+  namespace: openshift-image-registry
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: configure-image-registry
+      labels:
+        app: configure-image-registry
+    spec:
+      containers:
+      - name:  client
+        image: quay.io/openshift/origin-cli:latest
+        command: ["/bin/sh","-c"]
+        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true,\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
+      restartPolicy: Never
+

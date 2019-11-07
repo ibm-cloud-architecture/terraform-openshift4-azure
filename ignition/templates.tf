@@ -33,10 +33,9 @@ EOF
 }
 
 resource "local_file" "install_config_yaml" {
-  content  = "${data.template_file.install_config_yaml.rendered}"
+  content  = data.template_file.install_config_yaml.rendered
   filename = "${local.installer_workspace}/install-config.yaml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
   ]
 }
@@ -69,7 +68,6 @@ resource "local_file" "cluster-infrastructure-02-config" {
   content  = data.template_file.cluster-infrastructure-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-infrastructure-02-config.yml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -96,7 +94,6 @@ resource "local_file" "cluster-dns-02-config" {
   content  = data.template_file.cluster-dns-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-dns-02-config.yml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -110,19 +107,18 @@ data:
     \"\",\n\t\"aadClientSecret\": \"\",\n\t\"aadClientCertPath\": \"\",\n\t\"aadClientCertPassword\":
     \"\",\n\t\"useManagedIdentityExtension\": true,\n\t\"userAssignedIdentityID\":
     \"\",\n\t\"subscriptionId\": \"${var.azure_subscription_id}\",\n\t\"resourceGroup\":
-    \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.worker_vnet_name}\",\n\t\"vnetResourceGroup\":
-    \"${var.cluster_id}-rg\",\n\t\"subnetName\": \"${var.cluster_id}-node-subnet\",\n\t\"securityGroupName\":
+    \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.virtual_network_name}\",\n\t\"vnetResourceGroup\":
+    \"${var.cluster_id}-rg\",\n\t\"subnetName\": \"${var.cluster_id}-worker-subnet\",\n\t\"securityGroupName\":
     \"${var.cluster_id}-node-nsg\",\n\t\"routeTableName\": \"${var.cluster_id}-node-routetable\",\n\t\"primaryAvailabilitySetName\":
     \"\",\n\t\"vmType\": \"\",\n\t\"primaryScaleSetName\": \"\",\n\t\"cloudProviderBackoff\":
     true,\n\t\"cloudProviderBackoffRetries\": 0,\n\t\"cloudProviderBackoffExponent\":
     0,\n\t\"cloudProviderBackoffDuration\": 6,\n\t\"cloudProviderBackoffJitter\":
-    0,\n\t\"cloudProviderRateLimit\": true,\n\t\"cloudProviderRateLimitQPS\": 6,\n\t\"cloudProviderRateLimitBucket\":
-    10,\n\t\"cloudProviderRateLimitQPSWrite\": 6,\n\t\"cloudProviderRateLimitBucketWrite\":
+    0,\n\t\"cloudProviderRateLimit\": true,\n\t\"cloudProviderRateLimitQPS\": 12,\n\t\"cloudProviderRateLimitBucket\":
+    10,\n\t\"cloudProviderRateLimitQPSWrite\": 12,\n\t\"cloudProviderRateLimitBucketWrite\":
     10,\n\t\"useInstanceMetadata\": true,\n\t\"loadBalancerSku\": \"standard\",\n\t\"excludeMasterFromStandardLB\":
     null,\n\t\"disableOutboundSNAT\": null,\n\t\"maximumLoadBalancerRuleCount\": 0\n}\n"
 kind: ConfigMap
 metadata:
-  creationTimestamp: null
   name: cloud-provider-config
   namespace: openshift-config
 EOF
@@ -132,44 +128,6 @@ resource "local_file" "cloud-provider-config" {
   content  = data.template_file.cloud-provider-config.rendered
   filename = "${local.installer_workspace}/manifests/cloud-provider-config.yaml"
   depends_on = [
-    "null_resource.dependency",
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
-  ]
-}
-
-data "template_file" "etcd-host-service-endpoints-addresses" {
-  count    = var.master_count
-  template = <<EOF
-  - ip: ${element(var.etcd_ip_addresses, count.index)}
-    hostname: etcd-${count.index}
-EOF
-}
-
-data "template_file" "etcd-host-service-endpoints" {
-  template = <<EOF
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: host-etcd
-  namespace: openshift-etcd
-  annotations:
-    alpha.installer.openshift.io/dns-suffix: ocp42.azure.ncolon.xyz
-subsets:
-- addresses:
-${join("", data.template_file.etcd-host-service-endpoints-addresses.*.rendered)}
-  ports:
-  - name: etcd
-    port: 2379
-    protocol: TCP
-EOF
-}
-
-resource "local_file" "etcd-host-service-endpoints" {
-  content  = data.template_file.etcd-host-service-endpoints.rendered
-  filename = "${local.installer_workspace}/manifests/etcd-host-service-endpoints.yaml"
-  depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -225,7 +183,7 @@ spec:
       userDataSecret:
         name: master-user-data
       vmSize: ${var.master_vm_type}
-      vnet: ${var.controlplane_vnet_name}
+      vnet: ${var.virtual_network_name}
       zone: "${count.index + 1}"
 status: {}
 EOF
@@ -236,7 +194,6 @@ resource "local_file" "openshift-cluster-api_master-machines" {
   content  = element(data.template_file.openshift-cluster-api_master-machines.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-${count.index}.yaml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -306,7 +263,7 @@ spec:
           userDataSecret:
             name: worker-user-data
           vmSize: ${var.worker_vm_type}
-          vnet: ${var.worker_vnet_name}
+          vnet: ${var.virtual_network_name}
           zone: "${count.index + 1}"
 status:
   replicas: 0
@@ -318,7 +275,6 @@ resource "local_file" "openshift-cluster-api_worker-machineset" {
   content  = element(data.template_file.openshift-cluster-api_worker-machineset.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-${count.index}.yaml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -390,7 +346,7 @@ spec:
           userDataSecret:
             name: worker-user-data
           vmSize: ${var.infra_vm_type}
-          vnet: ${var.worker_vnet_name}
+          vnet: ${var.virtual_network_name}
           zone: "${count.index + 1}"
 EOF
 }
@@ -400,7 +356,6 @@ resource "local_file" "openshift-cluster-api_infra-machineset" {
   content  = element(data.template_file.openshift-cluster-api_infra-machineset.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_infra-machineset-${count.index}.yaml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -417,7 +372,9 @@ metadata:
   namespace: openshift-ingress-operator
 spec:
   endpointPublishingStrategy:
-    type: LoadBalanceService
+    loadBalancer:
+      scope: ${var.private ? "Internal" : "External"}
+    type: LoadBalancerService
   replicas: 2
   nodePlacement:
     nodeSelector:
@@ -429,41 +386,8 @@ EOF
 
 resource "local_file" "ingresscontroller-default" {
   content  = data.template_file.ingresscontroller-default.rendered
-  filename = "${local.installer_workspace}/configs/99_default_ingress_controller.yaml"
+  filename = "${local.installer_workspace}/openshift/99_default_ingress_controller.yaml"
   depends_on = [
-    "null_resource.dependency",
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
-  ]
-}
-
-data "template_file" "ingress-service-default" {
-  template = <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-resource-group: ${var.resource_group_name}
-  name: azure-load-balancer
-  namespace: openshift-ingress
-spec:
-  loadBalancerIP: ${var.apps_lb_pip_ip}
-  type: LoadBalancer
-  ports:
-  - port: 80
-    name: http
-  - port: 443
-    name: https
-  selector:
-    ingresscontroller.operator.openshift.io/deployment-ingresscontroller: default
-EOF
-}
-
-resource "local_file" "ingress-service-default" {
-  content  = data.template_file.ingress-service-default.rendered
-  filename = "${local.installer_workspace}/configs/99_ingress-service-default.yaml"
-  depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -491,7 +415,6 @@ resource "local_file" "cloud-creds-secret-kube-system" {
   content  = data.template_file.cloud-creds-secret-kube-system.rendered
   filename = "${local.installer_workspace}/openshift/99_cloud-creds-secret.yaml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
@@ -516,91 +439,10 @@ resource "local_file" "cluster-scheduler-02-config" {
   content  = data.template_file.cluster-scheduler-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-scheduler-02-config.yml"
   depends_on = [
-    "null_resource.dependency",
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
 }
-
-data "template_file" "azure-storage-clusterrole" {
-  template = <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: system:azure-cloud-provider-filestorage
-rules:
-- apiGroups: ['']
-  resources: ['secrets']
-  verbs:     ['get','create']
-EOF
-}
-
-resource "local_file" "azure-storage-clusterrole" {
-  content  = data.template_file.azure-storage-clusterrole.rendered
-  filename = "${local.installer_workspace}/openshift/99_azure-storage-clusterrole.yml"
-  depends_on = [
-    "null_resource.dependency",
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
-  ]
-}
-
-data "template_file" "azure-file-storageclass" {
-  template = <<EOF
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: azure-file
-mountOptions:
-  - dir_mode=0777
-  - file_mode=0777
-  - uid=1000
-  - gid=1000
-provisioner: kubernetes.io/azure-file
-parameters:
-  storageAccount: ${var.azure_storage_azurefile_name}
-reclaimPolicy: Delete
-volumeBindingMode: Immediate
-EOF
-}
-
-resource "local_file" "azure-file-storageclass" {
-  content  = data.template_file.azure-file-storageclass.rendered
-  filename = "${local.installer_workspace}/openshift/99_azure-file-storageclass.yml"
-  depends_on = [
-    "null_resource.dependency",
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
-  ]
-}
-
-data "template_file" "image-registry-pvc" {
-  template = <<EOF
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: image-registry-storage
-  namespace: openshift-image-registry
-spec:
-  accessModes:
-  - ReadWriteMany
-  resources:
-    requests:
-      storage: 100Gi
-  storageClassName: azure-file
-EOF
-}
-
-resource "local_file" "image-registry-pvc" {
-  content  = data.template_file.image-registry-pvc.rendered
-  filename = "${local.installer_workspace}/openshift/99_image-registry-pvc.yml"
-  depends_on = [
-    "null_resource.dependency",
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
-  ]
-}
-
 
 data "template_file" "cluster-monitoring-configmap" {
   template = <<EOF
@@ -639,7 +481,89 @@ resource "local_file" "cluster-monitoring-configmap" {
   content  = data.template_file.cluster-monitoring-configmap.rendered
   filename = "${local.installer_workspace}/openshift/99_cluster-monitoring-configmap.yml"
   depends_on = [
-    "null_resource.dependency",
+    "null_resource.download_binaries",
+    "null_resource.generate_manifests",
+  ]
+}
+
+data "template_file" "configure-image-registry-job" {
+  template = <<EOF
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:ibm-patch-cluster-storage
+rules:
+- apiGroups: ['imageregistry.operator.openshift.io']
+  resources: ['configs']
+  verbs:     ['get','patch']
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: system:ibm-patch-cluster-storage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:ibm-patch-cluster-storage
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: openshift-image-registry
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ibm-configure-image-registry
+  namespace: openshift-image-registry
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: configure-image-registry
+      labels:
+        app: configure-image-registry
+    spec:
+      containers:
+      - name:  client
+        image: quay.io/openshift/origin-cli:latest
+        command: ["/bin/sh","-c"]
+        args: ["/usr/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true,\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
+      restartPolicy: Never
+EOF
+}
+
+resource "local_file" "configure-image-registry-job" {
+  content  = data.template_file.configure-image-registry-job.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-image-registry-job.yml"
+  depends_on = [
+    "null_resource.download_binaries",
+    "null_resource.generate_manifests",
+  ]
+}
+
+
+data "template_file" "private-cluster-outbound-service" {
+  count    = var.private ? 1 : 0
+  template = <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: openshift-config-managed
+  name: outbound-provider
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 27627
+EOF
+}
+
+resource "local_file" "private-cluster-outbound-service" {
+  count    = var.private ? 1 : 0
+  content  = data.template_file.private-cluster-outbound-service.*.rendered
+  filename = "${local.installer_workspace}/openshift/99_private-cluster-outbound-service.yaml"
+  depends_on = [
     "null_resource.download_binaries",
     "null_resource.generate_manifests",
   ]
