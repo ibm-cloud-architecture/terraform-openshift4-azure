@@ -489,6 +489,12 @@ resource "local_file" "cluster-monitoring-configmap" {
 data "template_file" "configure-image-registry-job" {
   template = <<EOF
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: infra
+  namespace: openshift-image-registry
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -524,12 +530,13 @@ spec:
       name: configure-image-registry
       labels:
         app: configure-image-registry
+    serviceAccountName: infra
     spec:
       containers:
       - name:  client
         image: quay.io/openshift/origin-cli:latest
         command: ["/bin/sh","-c"]
-        args: ["/usr/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true,\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
+        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true,\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
       restartPolicy: Never
 EOF
 }
