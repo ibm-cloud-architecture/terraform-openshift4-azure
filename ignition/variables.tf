@@ -1,7 +1,3 @@
-variable "dependson" {
-  type    = list(string)
-  default = []
-}
 variable "base_domain" {
   type = string
 }
@@ -60,28 +56,12 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "storage_account_name" {
-  type = string
-}
-
-variable "storage_container_name" {
-  type = string
-}
-
-variable "storage_account_sas" {
-  type = string
-}
-
 variable "node_count" {
   type = string
 }
 
 variable "infra_count" {
   type = string
-}
-
-variable "etcd_ip_addresses" {
-  type = list(string)
 }
 
 variable "azure_region" {
@@ -131,23 +111,14 @@ variable "azure_tenant_id" {
   type = string
 }
 
-variable "azure_storage_azurefile_name" {
-  type = string
-}
-
 variable "azure_rhcos_image_id" {
   type = string
 }
 
-variable "controlplane_vnet_name" {
+variable "virtual_network_name" {
   type = string
 }
 
-variable "worker_vnet_name" {
-  type = string
+variable "private" {
+  type = bool
 }
-
-variable "apps_lb_pip_ip" {
-  type = string
-}
-

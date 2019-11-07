@@ -9,11 +9,3 @@ output "master_ignition" {
 output "worker_ignition" {
   value = data.ignition_config.worker_redirect.rendered
 }
-
-output "module_completed" {
-  value = "${join(",",
-    "${list(data.ignition_config.bootstrap_redirect.id)}",
-    "${list(data.ignition_config.master_redirect.id)}",
-    "${list(data.ignition_config.worker_redirect.id)}",
-  )}"
-}
