@@ -16,8 +16,8 @@ This [terraform](terraform.io) implementation will deploy OpenShift 4.x into an 
 # Minimal TFVARS file
 
 ```terraform
-azure_region           = "eastus2"
-openshift_cluster_name = "ocp42"
+azure_region = "eastus2"
+cluster_name = "ocp42"
 
 # From Prereq. Step #1
 base_domain                   = "azure.ncolon.xyz"
