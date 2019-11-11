@@ -122,3 +122,10 @@ variable "virtual_network_name" {
 variable "private" {
   type = bool
 }
+
+variable "airgapped" {
+  type = map(string)
+  default = {
+    enabled = false
+  }
+}

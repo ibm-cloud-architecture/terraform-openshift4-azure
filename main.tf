@@ -51,6 +51,7 @@ module "vnet" {
   region              = var.azure_region
   dns_label           = local.cluster_id
   private             = var.azure_private
+  airgapped           = var.airgapped
 }
 
 module "ignition" {
@@ -64,7 +65,7 @@ module "ignition" {
   machine_cidr                  = var.machine_cidr
   service_network_cidr          = var.openshift_service_network_cidr
   azure_dns_resource_group_name = var.azure_base_domain_resource_group_name
-  openshift_pull_secret         = chomp(file(var.openshift_pull_secret))
+  openshift_pull_secret         = var.openshift_pull_secret
   public_ssh_key                = chomp(tls_private_key.installkey.public_key_openssh)
   cluster_id                    = local.cluster_id
   resource_group_name           = azurerm_resource_group.main.name
@@ -84,6 +85,7 @@ module "ignition" {
   azure_rhcos_image_id          = azurerm_image.cluster.id
   virtual_network_name          = module.vnet.virtual_network_name
   private                       = module.vnet.private
+  airgapped                     = var.airgapped
 }
 
 module "bootstrap" {

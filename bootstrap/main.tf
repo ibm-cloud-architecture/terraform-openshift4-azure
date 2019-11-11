@@ -20,7 +20,7 @@ data "azurerm_public_ip" "bootstrap_public_ip" {
 }
 
 resource "azurerm_network_interface" "bootstrap" {
-  count = var.bootstrap_completed ? 0 : var.private ? 0 : 1
+  count = var.bootstrap_completed ? 0 : 1
 
   name                = "${var.cluster_id}-bootstrap-nic"
   location            = var.region

@@ -55,7 +55,7 @@ resource "null_resource" "download_binaries" {
   provisioner "local-exec" {
     when    = "create"
     command = <<EOF
-mkdir ${local.installer_workspace}
+test -e ${local.installer_workspace} || mkdir ${local.installer_workspace}
 case $(uname -s) in
   Darwin)
     wget -r -l1 -np -nd -q ${local.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-install-mac-4*.tar.gz'
@@ -76,6 +76,7 @@ case $(uname -s) in
 esac
 chmod u+x ${local.installer_workspace}/jq
 rm -f ${local.installer_workspace}/*.tar.gz ${local.installer_workspace}/robots*.txt* ${local.installer_workspace}/README.md
+"${var.airgapped["enabled"]}" == "true" && ${local.installer_workspace}/oc adm release extract -a ${path.root}/${var.openshift_pull_secret} --command=openshift-install ${var.airgapped["repository"]}:${var.openshift_version} && mv ${path.root}/openshift-install ${local.installer_workspace}
 EOF
   }
 

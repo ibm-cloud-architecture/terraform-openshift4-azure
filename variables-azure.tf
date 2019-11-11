@@ -166,3 +166,11 @@ variable "bootstrap_completed" {
   type    = bool
   default = false
 }
+
+variable "airgapped" {
+  type = map(string)
+  default = {
+    airgapped  = false
+    repository = ""
+  }
+}
