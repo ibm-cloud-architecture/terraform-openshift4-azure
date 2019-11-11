@@ -27,8 +27,16 @@ platform:
   azure:
     baseDomainResourceGroupName: ${var.azure_dns_resource_group_name}
     region: ${var.azure_region}
-pullSecret: '${var.openshift_pull_secret}'
-sshKey: '${var.public_ssh_key}'  
+pullSecret: '${chomp(file(var.openshift_pull_secret))}'
+sshKey: '${var.public_ssh_key}'
+%{if var.airgapped["enabled"]}imageContentSources:
+- mirrors:
+  - ${var.airgapped["repository"]}
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - ${var.airgapped["repository"]}
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+%{endif}
 EOF
 }
 
@@ -568,8 +576,37 @@ EOF
 
 resource "local_file" "private-cluster-outbound-service" {
   count    = var.private ? 1 : 0
-  content  = data.template_file.private-cluster-outbound-service.*.rendered
+  content  = element(data.template_file.private-cluster-outbound-service.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_private-cluster-outbound-service.yaml"
+  depends_on = [
+    "null_resource.download_binaries",
+    "null_resource.generate_manifests",
+  ]
+}
+
+
+data "template_file" "airgapped_registry_upgrades" {
+  count    = var.airgapped["enabled"] ? 1 : 0
+  template = <<EOF
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: airgapped
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - ${var.airgapped["repository"]}
+    source: quay.io/openshift-release-dev/ocp-release
+  - mirrors:
+    - ${var.airgapped["repository"]}
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+EOF
+}
+
+resource "local_file" "airgapped_registry_upgrades" {
+  count    = var.airgapped["enabled"] ? 1 : 0
+  content  = element(data.template_file.airgapped_registry_upgrades.*.rendered, count.index)
+  filename = "${local.installer_workspace}/openshift/99_airgapped_registry_upgrades.yaml"
   depends_on = [
     "null_resource.download_binaries",
     "null_resource.generate_manifests",

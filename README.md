@@ -36,37 +36,38 @@ azure_private = false
 
 # Customizable Variables
 
-| Variable                              | Description                                                  | Default         | Type   |
-| ------------------------------------- | ------------------------------------------------------------ | --------------- | ------ |
-| azure_subscription_id                 | Subscription ID for Azure Account                            | -               | string |
-| azure_tenant_id                       | Tenant ID for Azure Subscription                             | -               | string |
-| azure_client_id                       | Application Client ID (from Prereq Step #2)                  | -               | string |
-| azure_client_secret                   | Application Client Secret (from Prereq Step #2)              | -               | string |
-| azure_region                          | Azure Region to deploy to                                    | -               | string |
-| cluster_name                | Cluster Identifier                                           | -               | string |
-| openshift_master_count                | Number of master nodes to deploy                             | 3               | string |
-| openshift_worker_count                | Number of worker nodes to deploy                             | 3               | string |
-| openshift_infra_count                 | Number of infra nodes to deploy                              | 3               | string |
-| machine_cidr                          | CIDR for OpenShift VNET                                      | 10.0.0.0/16     | string |
-| base_domain                           | DNS name for your deployment                                 | -               | string |
-| azure_base_domain_resource_group_name | Resource group where DNS is hosted.  Must be on zame region. | -               | string |
-| azure_bootstrap_vm_type               | Size of bootstrap VM                                         | Standard_D4s_v3 | string |
-| azure_master_vm_type                  | Size of master node VMs                                      | Standard_D4s_v3 | string |
-| azure_infra_vm_type                   | Size of infra node VMs                                       | Standard_D4s_v3 | string |
-| azure_worker_vm_type                  | Sizs of worker node VMs                                      | Standard_D4s_v3 | string |
-| openshift_cluster_network_cidr        | CIDR for Kubernetes pods                                     | 10.128.0.0/14   | string |
-| openshift_cluster_network_host_prefix | Detemines the number of pods a node can host.  23 gives you 510 pods per node. | 23              | string |
-| openshift_service_network_cidr        | CIDR for Kubernetes services                                 | 172.30.0.0/16   | string |
-| openshift_pull_secret                 | Filename that holds your OpenShift [pull-secret](https://cloud.redhat.com/openshift/install/azure/installer-provisioned) | -               | string |
-| azure_master_root_volume_size         | Size of master node root volume                              | 1024            | string |
-| azure_worker_root_volume_size         | Size of worker node root volume                              | 128             | string |
-| azure_infra_root_volume_size          | Size of infra node root volume                               | 128             | string |
-| azure_master_root_volume_type         | Storage type for master root volume                          | Premium_LRS     | string | 
-| azure_image_url                       | URL of the CoreOS image. Can be found [here](https://github.com/openshift/installer/blob/master/data/data/rhcos.json)                      | [URL](https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20190823.0.vhd) | string |
-| openshift_version                     | Version of OpenShift to deploy.                              | latest          | strig |
+| Variable                              | Description                                                    | Default         | Type   |
+| ------------------------------------- | -------------------------------------------------------------- | --------------- | ------ |
+| azure_subscription_id                 | Subscription ID for Azure Account                              | -               | string |
+| azure_tenant_id                       | Tenant ID for Azure Subscription                               | -               | string |
+| azure_client_id                       | Application Client ID (from Prereq Step #2)                    | -               | string |
+| azure_client_secret                   | Application Client Secret (from Prereq Step #2)                | -               | string |
+| azure_region                          | Azure Region to deploy to                                      | -               | string |
+| cluster_name                | Cluster Identifier                                                       | -               | string |
+| openshift_master_count                | Number of master nodes to deploy                               | 3               | string |
+| openshift_worker_count                | Number of worker nodes to deploy                               | 3               | string |
+| openshift_infra_count                 | Number of infra nodes to deploy                                | 3               | string |
+| machine_cidr                          | CIDR for OpenShift VNET                                        | 10.0.0.0/16     | string |
+| base_domain                           | DNS name for your deployment                                   | -               | string |
+| azure_base_domain_resource_group_name | Resource group where DNS is hosted.  Must be on zame region.   | -               | string |
+| azure_bootstrap_vm_type               | Size of bootstrap VM                                           | Standard_D4s_v3 | string |
+| azure_master_vm_type                  | Size of master node VMs                                        | Standard_D4s_v3 | string |
+| azure_infra_vm_type                   | Size of infra node VMs                                         | Standard_D4s_v3 | string |
+| azure_worker_vm_type                  | Sizs of worker node VMs                                        | Standard_D4s_v3 | string |
+| openshift_cluster_network_cidr        | CIDR for Kubernetes pods                                       | 10.128.0.0/14   | string |
+| openshift_cluster_network_host_prefix | Detemines the number of pods a node can host.  23 gives you 510 pods per node. | 23 | string |
+| openshift_service_network_cidr        | CIDR for Kubernetes services                                   | 172.30.0.0/16   | string |
+| openshift_pull_secret                 | Filename that holds your OpenShift [pull-secret](https://cloud.redhat.com/openshift/install/azure/installer-provisioned) | - | string |
+| azure_master_root_volume_size         | Size of master node root volume                                | 1024            | string |
+| azure_worker_root_volume_size         | Size of worker node root volume                                | 128             | string |
+| azure_infra_root_volume_size          | Size of infra node root volume                                 | 128             | string |
+| azure_master_root_volume_type         | Storage type for master root volume                            | Premium_LRS     | string | 
+| azure_image_url                       | URL of the CoreOS image. Can be found [here](https://github.com/openshift/installer/blob/master/data/data/rhcos.json) | [URL](https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20190823.0.vhd) | string |
+| openshift_version                     | Version of OpenShift to deploy.                                | latest          | strig |
 | bootstrap_completed                   | Control variable to delete bootstrap node after initialization | false | bool |
 | azure_private                         | If set to `true` will deploy a completely private cluster with no public endpoints | - | bool |
-| azure_extra_tags | Extra Azure tags to be applied to created resources | {} | map |
+| azure_extra_tags                      | Extra Azure tags to be applied to created resources            | {} | map |
+| airgapped                             | Configuration for an AirGapped environment                     | [AirGapped](airgapped.md) | map |
 
 
 # Deploy with Terraform

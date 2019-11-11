@@ -31,3 +31,10 @@ variable "private" {
   type        = bool
   description = "The determines if this is a private/internal cluster or not."
 }
+
+variable "airgapped" {
+  type = map(string)
+  default = {
+    enabled = false
+  }
+}
