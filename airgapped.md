@@ -68,12 +68,12 @@ Once the registry is created, follow the RedHat Documentation from [Creating a p
 
 # Exposing the image registry to Terraform
 
-In your terraform.tvfars, add the following at the bottom
+In your terraform.tvfars, add the following at the bottom.
 ```terraform
 azure_private = true
 airgapped     = {
   enabled     = true
-  repository  = "openshiftibm.azurecr.io/ocp4/openshift4"
+  repository  = "example.azurecr.io/ocp4/openshift4"
 }
 ```
 
