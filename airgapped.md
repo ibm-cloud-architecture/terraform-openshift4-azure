@@ -39,7 +39,7 @@ imageContentSources:
   - openshiftrepo.example.com:443/ocp4/openshift4
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - openshiftrepo.example.com:443ocp4/openshift4
+  - openshiftrepo.example.com:443/ocp4/openshift4
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 
 
