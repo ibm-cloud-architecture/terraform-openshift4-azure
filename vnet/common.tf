@@ -11,4 +11,6 @@ locals {
 
   virtual_network    = azurerm_virtual_network.cluster_vnet.name
   virtual_network_id = azurerm_virtual_network.cluster_vnet.id
+
+  private = var.airgapped["enabled"]
 }

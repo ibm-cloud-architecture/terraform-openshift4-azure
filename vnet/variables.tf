@@ -27,11 +27,6 @@ variable "dns_label" {
   description = "The label used to build the dns name. i.e. <label>.<region>.cloudapp.azure.com"
 }
 
-variable "private" {
-  type        = bool
-  description = "The determines if this is a private/internal cluster or not."
-}
-
 variable "airgapped" {
   type = map(string)
   default = {

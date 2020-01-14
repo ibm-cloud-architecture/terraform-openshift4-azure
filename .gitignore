@@ -20,3 +20,6 @@ makefile
 
 # installer-files
 **/installer-files/*
+
+# optional files
+extras.tf

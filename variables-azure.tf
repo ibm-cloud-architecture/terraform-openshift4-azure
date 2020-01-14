@@ -81,11 +81,11 @@ variable "azure_tenant_id" {
   description = "The tenant ID that should be used to interact with Azure API"
 }
 
-variable "azure_private" {
-  type        = bool
-  description = "This determines if this is a private cluster or not."
-  default     = false
-}
+# variable "azure_private" {
+#   type        = bool
+#   description = "This determines if this is a private cluster or not."
+#   default     = false
+# }
 
 #################################################
 

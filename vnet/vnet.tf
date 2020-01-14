@@ -12,7 +12,11 @@ resource "azurerm_route_table" "route_table" {
 }
 
 locals {
-  service_endpoints = var.airgapped["enabled"] ? "Microsoft.ContainerRegistry" : ""
+  airgapped_service_endpoints = [
+    "Microsoft.ContainerRegistry",
+    "Microsoft.AzureActiveDirectory",
+    "Microsoft.Storage"
+  ]
 }
 
 resource "azurerm_subnet" "master_subnet" {
@@ -20,7 +24,7 @@ resource "azurerm_subnet" "master_subnet" {
   address_prefix       = local.master_subnet_cidr
   virtual_network_name = local.virtual_network
   name                 = "${var.cluster_id}-master-subnet"
-  service_endpoints    = [local.service_endpoints]
+  service_endpoints    = local.private ? local.airgapped_service_endpoints : []
 }
 
 resource "azurerm_subnet" "worker_subnet" {
@@ -28,5 +32,5 @@ resource "azurerm_subnet" "worker_subnet" {
   address_prefix       = local.worker_subnet_cidr
   virtual_network_name = local.virtual_network
   name                 = "${var.cluster_id}-worker-subnet"
-  service_endpoints    = [local.service_endpoints]
+  service_endpoints    = local.private ? local.airgapped_service_endpoints : []
 }
