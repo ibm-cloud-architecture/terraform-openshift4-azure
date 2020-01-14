@@ -23,3 +23,4 @@ makefile
 
 # optional files
 extras.tf
+vnet/nat-gateway.tf
