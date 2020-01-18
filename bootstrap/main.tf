@@ -102,6 +102,12 @@ resource "azurerm_virtual_machine" "bootstrap" {
     azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap,
     azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap
   ]
+
+  lifecycle {
+    ignore_changes = [
+      os_profile
+    ]
+  }
 }
 
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {

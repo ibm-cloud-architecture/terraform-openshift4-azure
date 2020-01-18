@@ -172,19 +172,17 @@ resource "azurerm_role_assignment" "main" {
 
 resource "azurerm_storage_container" "vhd" {
   name                 = "vhd"
-  resource_group_name  = azurerm_resource_group.main.name
   storage_account_name = azurerm_storage_account.cluster.name
 }
 
 resource "azurerm_storage_blob" "rhcos_image" {
   name                   = "rhcos${random_string.cluster_id.result}.vhd"
-  resource_group_name    = azurerm_resource_group.main.name
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "block"
   source_uri             = var.azure_image_url
   metadata               = map("source_uri", var.azure_image_url)
-  attempts               = 2
+
   lifecycle {
     ignore_changes = [
       type

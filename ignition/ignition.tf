@@ -139,7 +139,6 @@ EOF
 resource "azurerm_storage_blob" "ignition-bootstrap" {
   name                   = "bootstrap.ign"
   source                 = "${local.installer_workspace}/bootstrap.ign"
-  resource_group_name    = var.resource_group_name
   storage_account_name   = azurerm_storage_account.ignition.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "block"
@@ -151,7 +150,6 @@ resource "azurerm_storage_blob" "ignition-bootstrap" {
 resource "azurerm_storage_blob" "ignition-master" {
   name                   = "master.ign"
   source                 = "${local.installer_workspace}/master.ign"
-  resource_group_name    = var.resource_group_name
   storage_account_name   = azurerm_storage_account.ignition.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "block"
@@ -163,7 +161,6 @@ resource "azurerm_storage_blob" "ignition-master" {
 resource "azurerm_storage_blob" "ignition-worker" {
   name                   = "worker.ign"
   source                 = "${local.installer_workspace}/worker.ign"
-  resource_group_name    = var.resource_group_name
   storage_account_name   = azurerm_storage_account.ignition.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "block"

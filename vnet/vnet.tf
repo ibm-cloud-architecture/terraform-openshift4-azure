@@ -25,6 +25,12 @@ resource "azurerm_subnet" "master_subnet" {
   virtual_network_name = local.virtual_network
   name                 = "${var.cluster_id}-master-subnet"
   service_endpoints    = local.private ? local.airgapped_service_endpoints : []
+
+  lifecycle {
+    ignore_changes = [
+      network_security_group_id
+    ]
+  }
 }
 
 resource "azurerm_subnet" "worker_subnet" {
@@ -33,4 +39,11 @@ resource "azurerm_subnet" "worker_subnet" {
   virtual_network_name = local.virtual_network
   name                 = "${var.cluster_id}-worker-subnet"
   service_endpoints    = local.private ? local.airgapped_service_endpoints : []
+
+  lifecycle {
+    ignore_changes = [
+      network_security_group_id
+    ]
+  }
 }
+

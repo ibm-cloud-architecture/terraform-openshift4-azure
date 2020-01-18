@@ -83,5 +83,11 @@ resource "azurerm_virtual_machine" "master" {
     enabled     = true
     storage_uri = var.storage_account.primary_blob_endpoint
   }
+
+  lifecycle {
+    ignore_changes = [
+      os_profile
+    ]
+  }
 }
 
