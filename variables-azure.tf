@@ -140,7 +140,7 @@ variable "openshift_worker_count" {
 
 variable "openshift_infra_count" {
   type    = string
-  default = 3
+  default = 0
 }
 
 variable "azure_infra_vm_type" {
