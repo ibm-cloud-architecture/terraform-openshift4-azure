@@ -548,7 +548,7 @@ spec:
       - name:  client
         image: quay.io/openshift/origin-cli:latest
         command: ["/bin/sh","-c"]
-        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true,%{if var.infra_count > 0}\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}%{endif}}}'"]
+        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true%{if var.infra_count > 0},\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}%{endif}}}'"]
       restartPolicy: Never
 EOF
 }
@@ -611,6 +611,61 @@ resource "local_file" "airgapped_registry_upgrades" {
   count    = var.airgapped["enabled"] ? 1 : 0
   content  = element(data.template_file.airgapped_registry_upgrades.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_airgapped_registry_upgrades.yaml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "cluster_autoscale" {
+  template = <<EOF
+apiVersion: "autoscaling.openshift.io/v1"
+kind: "ClusterAutoscaler"
+metadata:
+  name: "default"
+spec:
+  resourceLimits:
+    maxNodesTotal: 20
+  scaleDown:
+    enabled: true
+    delayAfterAdd: 10s
+    delayAfterDelete: 10s
+    delayAfterFailure: 10s
+EOF
+}
+
+resource "local_file" "cluster_autoscale" {
+  content  = data.template_file.cluster_autoscale.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure_cluster_autoscale.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+
+data "template_file" "machineset_autoscaler" {
+  count    = var.node_count
+  template = <<EOF
+apiVersion: autoscaling.openshift.io/v1beta1
+kind: MachineAutoscaler
+metadata:
+  name: ${var.cluster_id}-worker-${var.azure_region}${count.index + 1}
+  namespace: openshift-machine-api
+spec:
+  minReplicas: 1
+  maxReplicas: 2
+  scaleTargetRef:
+    apiVersion: machine.openshift.io/v1beta1
+    kind: MachineSet
+    name: ${var.cluster_id}-worker-${var.azure_region}${count.index + 1}
+EOF
+}
+
+resource "local_file" "machineset_autoscaler" {
+  count    = var.node_count
+  content  = element(data.template_file.machineset_autoscaler.*.rendered, count.index)
+  filename = "${local.installer_workspace}/openshift/99_configure_machineset_autoscaler_${count.index}.yml"
   depends_on = [
     null_resource.download_binaries,
     null_resource.generate_manifests,
