@@ -35,7 +35,7 @@ resource "azurerm_lb_backend_address_pool" "master_public_lb_pool" {
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
-  count = var.private ? 0 : 1
+  count = local.private ? 0 : 1
 
   name                           = "api-internal"
   resource_group_name            = var.resource_group_name
@@ -52,7 +52,7 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
 }
 
 resource "azurerm_lb_rule" "internal_outbound_rule" {
-  count = var.private ? 1 : 0
+  count = local.private ? 1 : 0
 
   name                           = "internal_outbound_rule"
   resource_group_name            = var.resource_group_name
@@ -68,7 +68,7 @@ resource "azurerm_lb_rule" "internal_outbound_rule" {
 }
 
 resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
-  count = var.private ? 0 : 1
+  count = local.private ? 0 : 1
 
   name                = "api-internal-probe"
   resource_group_name = var.resource_group_name

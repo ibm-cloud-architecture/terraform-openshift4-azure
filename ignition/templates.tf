@@ -44,7 +44,7 @@ resource "local_file" "install_config_yaml" {
   content  = data.template_file.install_config_yaml.rendered
   filename = "${local.installer_workspace}/install-config.yaml"
   depends_on = [
-    "null_resource.download_binaries",
+    null_resource.download_binaries,
   ]
 }
 
@@ -76,8 +76,8 @@ resource "local_file" "cluster-infrastructure-02-config" {
   content  = data.template_file.cluster-infrastructure-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-infrastructure-02-config.yml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -102,8 +102,8 @@ resource "local_file" "cluster-dns-02-config" {
   content  = data.template_file.cluster-dns-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-dns-02-config.yml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -136,8 +136,8 @@ resource "local_file" "cloud-provider-config" {
   content  = data.template_file.cloud-provider-config.rendered
   filename = "${local.installer_workspace}/manifests/cloud-provider-config.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -202,13 +202,13 @@ resource "local_file" "openshift-cluster-api_master-machines" {
   content  = element(data.template_file.openshift-cluster-api_master-machines.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-${count.index}.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
 data "template_file" "openshift-cluster-api_worker-machineset" {
-  count    = "${var.node_count}"
+  count    = var.node_count
   template = <<EOF
 apiVersion: machine.openshift.io/v1beta1
 kind: MachineSet
@@ -283,13 +283,13 @@ resource "local_file" "openshift-cluster-api_worker-machineset" {
   content  = element(data.template_file.openshift-cluster-api_worker-machineset.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-${count.index}.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
 data "template_file" "openshift-cluster-api_infra-machineset" {
-  count    = "${var.infra_count}"
+  count    = var.infra_count
   template = <<EOF
 apiVersion: machine.openshift.io/v1beta1
 kind: MachineSet
@@ -364,10 +364,11 @@ resource "local_file" "openshift-cluster-api_infra-machineset" {
   content  = element(data.template_file.openshift-cluster-api_infra-machineset.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_infra-machineset-${count.index}.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
+
 
 data "template_file" "ingresscontroller-default" {
   template = <<EOF
@@ -384,10 +385,11 @@ spec:
       scope: ${var.private ? "Internal" : "External"}
     type: LoadBalancerService
   replicas: 2
-  nodePlacement:
+%{if var.infra_count > 0}  nodePlacement:
     nodeSelector:
       matchLabels:
         node-role.kubernetes.io/infra: ""
+%{endif}
 EOF
 }
 
@@ -396,8 +398,8 @@ resource "local_file" "ingresscontroller-default" {
   content  = data.template_file.ingresscontroller-default.rendered
   filename = "${local.installer_workspace}/openshift/99_default_ingress_controller.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -423,8 +425,8 @@ resource "local_file" "cloud-creds-secret-kube-system" {
   content  = data.template_file.cloud-creds-secret-kube-system.rendered
   filename = "${local.installer_workspace}/openshift/99_cloud-creds-secret.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -447,8 +449,8 @@ resource "local_file" "cluster-scheduler-02-config" {
   content  = data.template_file.cluster-scheduler-02-config.rendered
   filename = "${local.installer_workspace}/manifests/cluster-scheduler-02-config.yml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -486,13 +488,15 @@ EOF
 }
 
 resource "local_file" "cluster-monitoring-configmap" {
+  count    = var.infra_count > 0 ? 1 : 0
   content  = data.template_file.cluster-monitoring-configmap.rendered
   filename = "${local.installer_workspace}/openshift/99_cluster-monitoring-configmap.yml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
+
 
 data "template_file" "configure-image-registry-job" {
   template = <<EOF
@@ -544,7 +548,7 @@ spec:
       - name:  client
         image: quay.io/openshift/origin-cli:latest
         command: ["/bin/sh","-c"]
-        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true,\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
+        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true%{if var.infra_count > 0},\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}%{endif}}}'"]
       restartPolicy: Never
 EOF
 }
@@ -553,8 +557,8 @@ resource "local_file" "configure-image-registry-job" {
   content  = data.template_file.configure-image-registry-job.rendered
   filename = "${local.installer_workspace}/openshift/99_configure-image-registry-job.yml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -579,8 +583,8 @@ resource "local_file" "private-cluster-outbound-service" {
   content  = element(data.template_file.private-cluster-outbound-service.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_private-cluster-outbound-service.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }
 
@@ -608,7 +612,62 @@ resource "local_file" "airgapped_registry_upgrades" {
   content  = element(data.template_file.airgapped_registry_upgrades.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_airgapped_registry_upgrades.yaml"
   depends_on = [
-    "null_resource.download_binaries",
-    "null_resource.generate_manifests",
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "cluster_autoscale" {
+  template = <<EOF
+apiVersion: "autoscaling.openshift.io/v1"
+kind: "ClusterAutoscaler"
+metadata:
+  name: "default"
+spec:
+  resourceLimits:
+    maxNodesTotal: 20
+  scaleDown:
+    enabled: true
+    delayAfterAdd: 10s
+    delayAfterDelete: 10s
+    delayAfterFailure: 10s
+EOF
+}
+
+resource "local_file" "cluster_autoscale" {
+  content  = data.template_file.cluster_autoscale.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure_cluster_autoscale.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+
+data "template_file" "machineset_autoscaler" {
+  count    = var.node_count
+  template = <<EOF
+apiVersion: autoscaling.openshift.io/v1beta1
+kind: MachineAutoscaler
+metadata:
+  name: ${var.cluster_id}-worker-${var.azure_region}${count.index + 1}
+  namespace: openshift-machine-api
+spec:
+  minReplicas: 1
+  maxReplicas: 2
+  scaleTargetRef:
+    apiVersion: machine.openshift.io/v1beta1
+    kind: MachineSet
+    name: ${var.cluster_id}-worker-${var.azure_region}${count.index + 1}
+EOF
+}
+
+resource "local_file" "machineset_autoscaler" {
+  count    = var.node_count
+  content  = element(data.template_file.machineset_autoscaler.*.rendered, count.index)
+  filename = "${local.installer_workspace}/openshift/99_configure_machineset_autoscaler_${count.index}.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
   ]
 }

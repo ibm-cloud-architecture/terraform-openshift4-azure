@@ -81,11 +81,11 @@ variable "azure_tenant_id" {
   description = "The tenant ID that should be used to interact with Azure API"
 }
 
-variable "azure_private" {
-  type        = bool
-  description = "This determines if this is a private cluster or not."
-  default     = false
-}
+# variable "azure_private" {
+#   type        = bool
+#   description = "This determines if this is a private cluster or not."
+#   default     = false
+# }
 
 #################################################
 
@@ -140,7 +140,7 @@ variable "openshift_worker_count" {
 
 variable "openshift_infra_count" {
   type    = string
-  default = 3
+  default = 0
 }
 
 variable "azure_infra_vm_type" {
