@@ -20,8 +20,8 @@ azure_region = "eastus2"
 cluster_name = "ocp42"
 
 # From Prereq. Step #1
-base_domain                   = "azure.ncolon.xyz"
-azure_dns_resource_group_name = "ncolon-keyvault-rg"
+base_domain                           = "azure.ncolon.xyz"
+azure_base_domain_resource_group_name = "openshift4-common-rg"
 
 # From Prereq. Step #2
 azure_subscription_id  = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
