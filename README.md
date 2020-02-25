@@ -41,10 +41,10 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_client_id                       | Application Client ID (from Prereq Step #2)                    | -               | string |
 | azure_client_secret                   | Application Client Secret (from Prereq Step #2)                | -               | string |
 | azure_region                          | Azure Region to deploy to                                      | -               | string |
-| cluster_name                | Cluster Identifier                                                       | -               | string |
+| cluster_name                          | Cluster Identifier                                             | -               | string |
 | openshift_master_count                | Number of master nodes to deploy                               | 3               | string |
 | openshift_worker_count                | Number of worker nodes to deploy                               | 3               | string |
-| openshift_infra_count                 | Number of infra nodes to deploy                                | 3               | string |
+| openshift_infra_count                 | Number of infra nodes to deploy                                | 0               | string |
 | machine_cidr                          | CIDR for OpenShift VNET                                        | 10.0.0.0/16     | string |
 | base_domain                           | DNS name for your deployment                                   | -               | string |
 | azure_base_domain_resource_group_name | Resource group where DNS is hosted.  Must be on zame region.   | -               | string |

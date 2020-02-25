@@ -126,6 +126,7 @@ variable "private" {
 variable "airgapped" {
   type = map(string)
   default = {
-    enabled = false
+    airgapped  = false
+    repository = ""
   }
 }
