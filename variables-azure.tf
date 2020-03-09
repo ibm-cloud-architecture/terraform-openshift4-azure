@@ -58,7 +58,7 @@ variable "azure_base_domain_resource_group_name" {
 variable "azure_image_url" {
   type        = string
   description = "The URL of the vm image used for all nodes."
-  default     = "https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20190823.0.vhd"
+  default     = "https://rhcos.blob.core.windows.net/imagebucket/rhcos-42.80.20191002.0.vhd"
 }
 
 variable "azure_subscription_id" {
