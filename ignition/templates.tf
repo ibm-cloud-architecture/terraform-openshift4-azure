@@ -27,6 +27,7 @@ platform:
   azure:
     baseDomainResourceGroupName: ${var.azure_dns_resource_group_name}
     region: ${var.azure_region}
+publish: ${var.private ? "Internal" : "External"}
 pullSecret: '${chomp(file(var.openshift_pull_secret))}'
 sshKey: '${var.public_ssh_key}'
 %{if var.airgapped["enabled"]}imageContentSources:
@@ -91,7 +92,7 @@ metadata:
 spec:
   baseDomain: ${var.cluster_name}.${var.base_domain}
   privateZone:
-    id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.cluster_id}-rg/providers/Microsoft.Network/dnszones/${var.cluster_name}.${var.base_domain}
+    id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.cluster_id}-rg/providers/Microsoft.Network/privateDnsZones/${var.cluster_name}.${var.base_domain}
   publicZone:
     id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.azure_dns_resource_group_name}/providers/Microsoft.Network/dnszones/${var.base_domain}
 status: {}
@@ -562,20 +563,22 @@ resource "local_file" "configure-image-registry-job" {
   ]
 }
 
-
 data "template_file" "private-cluster-outbound-service" {
   count    = var.private ? 1 : 0
   template = <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: openshift-config-managed
+---
+apiVersion: v1	
+kind: Service	
+metadata:	
+  namespace: openshift-config-managed	
   name: outbound-provider
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 27627
-EOF
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:	
+  type: LoadBalancer	
+  ports:	
+  - port: 27627	
+EOF	
 }
 
 resource "local_file" "private-cluster-outbound-service" {

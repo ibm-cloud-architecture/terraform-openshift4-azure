@@ -19,7 +19,7 @@ resource "azurerm_network_interface" "master" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master" {
-  count = var.instance_count
+  count = var.private ? 0 : var.instance_count
 
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
   backend_address_pool_id = var.elb_backend_pool_id

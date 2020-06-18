@@ -33,3 +33,8 @@ variable "airgapped" {
     enabled = false
   }
 }
+
+variable "private" {
+  type    = bool
+  default = false
+}

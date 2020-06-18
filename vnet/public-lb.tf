@@ -3,6 +3,7 @@ locals {
 }
 
 resource "azurerm_public_ip" "cluster_public_ip" {
+  count               = local.private ? 0 : 1
   sku                 = "Standard"
   location            = var.region
   name                = "${var.cluster_id}-pip"
@@ -12,11 +13,13 @@ resource "azurerm_public_ip" "cluster_public_ip" {
 }
 
 data "azurerm_public_ip" "cluster_public_ip" {
-  name                = azurerm_public_ip.cluster_public_ip.name
+  count               = local.private ? 0 : 1
+  name                = azurerm_public_ip.cluster_public_ip[0].name
   resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_lb" "public" {
+  count               = local.private ? 0 : 1
   sku                 = "Standard"
   name                = "${var.cluster_id}-public-lb"
   resource_group_name = var.resource_group_name
@@ -24,13 +27,14 @@ resource "azurerm_lb" "public" {
 
   frontend_ip_configuration {
     name                 = local.public_lb_frontend_ip_configuration_name
-    public_ip_address_id = azurerm_public_ip.cluster_public_ip.id
+    public_ip_address_id = azurerm_public_ip.cluster_public_ip[0].id
   }
 }
 
 resource "azurerm_lb_backend_address_pool" "master_public_lb_pool" {
+  count               = local.private ? 0 : 1
   resource_group_name = var.resource_group_name
-  loadbalancer_id     = azurerm_lb.public.id
+  loadbalancer_id     = azurerm_lb.public[0].id
   name                = "${var.cluster_id}-public-lb-control-plane"
 }
 
@@ -40,8 +44,8 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal" {
   name                           = "api-internal"
   resource_group_name            = var.resource_group_name
   protocol                       = "Tcp"
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.master_public_lb_pool.id
-  loadbalancer_id                = azurerm_lb.public.id
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.master_public_lb_pool[0].id
+  loadbalancer_id                = azurerm_lb.public[0].id
   frontend_port                  = 6443
   backend_port                   = 6443
   frontend_ip_configuration_name = local.public_lb_frontend_ip_configuration_name
@@ -57,8 +61,8 @@ resource "azurerm_lb_rule" "internal_outbound_rule" {
   name                           = "internal_outbound_rule"
   resource_group_name            = var.resource_group_name
   protocol                       = "Tcp"
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.master_public_lb_pool.id
-  loadbalancer_id                = azurerm_lb.public.id
+  backend_address_pool_id        = azurerm_lb_backend_address_pool.master_public_lb_pool[0].id
+  loadbalancer_id                = azurerm_lb.public[0].id
   frontend_port                  = 27627
   backend_port                   = 27627
   frontend_ip_configuration_name = local.public_lb_frontend_ip_configuration_name
@@ -74,7 +78,7 @@ resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
   resource_group_name = var.resource_group_name
   interval_in_seconds = 10
   number_of_probes    = 3
-  loadbalancer_id     = azurerm_lb.public.id
+  loadbalancer_id     = azurerm_lb.public[0].id
   port                = 6443
   protocol            = "TCP"
 }

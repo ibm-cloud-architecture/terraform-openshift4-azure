@@ -6,7 +6,8 @@ provider "azurerm" {
   # need version 1.33 until a newer version can handle creating azurerm_images with
   # hyperVGeneration property
   # https://github.com/terraform-providers/terraform-provider-azurerm/issues/4361
-  version = "~> 1.40.0"
+  # version = "~> 1.40.0"
+  features {}
 }
 
 resource "random_string" "cluster_id" {
@@ -51,6 +52,7 @@ module "vnet" {
   region              = var.azure_region
   dns_label           = local.cluster_id
   airgapped           = var.airgapped
+  # private             = var.azure_private
 }
 
 module "ignition" {
@@ -179,7 +181,7 @@ resource "azurerm_storage_blob" "rhcos_image" {
   name                   = "rhcos${random_string.cluster_id.result}.vhd"
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
-  type                   = "block"
+  type                   = "Block"
   source_uri             = var.azure_image_url
   metadata               = map("source_uri", var.azure_image_url)
 

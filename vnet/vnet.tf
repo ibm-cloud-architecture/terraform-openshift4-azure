@@ -21,29 +21,17 @@ locals {
 
 resource "azurerm_subnet" "master_subnet" {
   resource_group_name  = var.resource_group_name
-  address_prefix       = local.master_subnet_cidr
+  address_prefixes     = [local.master_subnet_cidr]
   virtual_network_name = local.virtual_network
   name                 = "${var.cluster_id}-master-subnet"
   service_endpoints    = local.private ? local.airgapped_service_endpoints : []
-
-  lifecycle {
-    ignore_changes = [
-      network_security_group_id
-    ]
-  }
 }
 
 resource "azurerm_subnet" "worker_subnet" {
   resource_group_name  = var.resource_group_name
-  address_prefix       = local.worker_subnet_cidr
+  address_prefixes     = [local.worker_subnet_cidr]
   virtual_network_name = local.virtual_network
   name                 = "${var.cluster_id}-worker-subnet"
   service_endpoints    = local.private ? local.airgapped_service_endpoints : []
-
-  lifecycle {
-    ignore_changes = [
-      network_security_group_id
-    ]
-  }
 }
 
