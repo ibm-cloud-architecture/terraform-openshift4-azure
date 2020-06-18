@@ -35,7 +35,7 @@ resource "azurerm_network_interface" "bootstrap" {
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap" {
-  count = var.bootstrap_completed ? 0 : 1
+  count = var.bootstrap_completed ? 0 : var.private ? 0 : 1
 
   network_interface_id    = element(azurerm_network_interface.bootstrap.*.id, count.index)
   backend_address_pool_id = var.elb_backend_pool_id

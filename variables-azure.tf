@@ -81,12 +81,6 @@ variable "azure_tenant_id" {
   description = "The tenant ID that should be used to interact with Azure API"
 }
 
-# variable "azure_private" {
-#   type        = bool
-#   description = "This determines if this is a private cluster or not."
-#   default     = false
-# }
-
 #################################################
 
 variable "cluster_name" {
@@ -170,7 +164,8 @@ variable "bootstrap_completed" {
 variable "airgapped" {
   type = map(string)
   default = {
-    airgapped  = false
-    repository = ""
+    airgapped     = false
+    repository    = ""
+    create_egress = false
   }
 }

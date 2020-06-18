@@ -1,9 +1,9 @@
 output "cluster-pip" {
-  value = local.private ? null : azurerm_public_ip.cluster_public_ip.ip_address
+  value = local.private ? null : azurerm_public_ip.cluster_public_ip[0].ip_address
 }
 
 output "public_lb_backend_pool_id" {
-  value = azurerm_lb_backend_address_pool.master_public_lb_pool.id
+  value = local.private ? null : azurerm_lb_backend_address_pool.master_public_lb_pool[0].id
 }
 
 output "internal_lb_backend_pool_id" {
@@ -11,11 +11,11 @@ output "internal_lb_backend_pool_id" {
 }
 
 output "public_lb_id" {
-  value = local.private ? null : azurerm_lb.public.id
+  value = local.private ? null : azurerm_lb.public[0].id
 }
 
 output "public_lb_pip_fqdn" {
-  value = local.private ? null : data.azurerm_public_ip.cluster_public_ip.fqdn
+  value = local.private ? null : data.azurerm_public_ip.cluster_public_ip[0].fqdn
 }
 
 output "internal_lb_ip_address" {
