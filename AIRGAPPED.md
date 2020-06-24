@@ -11,7 +11,7 @@ This repository allows for a completely private, AirGapped implementation.  To c
 
 
 ```bash
-$ export OCP_RELEASE="4.2.0"
+$ export OCP_RELEASE="4.3.26-x86_64"
 $ export LOCAL_REGISTRY="openshiftrepo.example.com:443"
 $ export LOCAL_REPOSITORY="ocp4/openshift4"
 $ export PRODUCT_REPO='openshift-release-dev' 
@@ -22,14 +22,17 @@ $ oc adm -a ${LOCAL_SECRET_JSON} release mirror \
      --from=quay.io/${PRODUCT_REPO}/${RELEASE_NAME}:${OCP_RELEASE} \
      --to=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY} \
      --to-release-image=${LOCAL_REGISTRY}/${LOCAL_REPOSITORY}:${OCP_RELEASE}
+info: Mirroring 103 images to openshiftrepo.example.com:443/ocp4/openshift4 ...
+openshiftrepo.example.com:443/
+  ocp4/openshift4
+    blobs:
+...
 
- ...
-
-sha256:211ece2d9718f7ab5c2a78d0124332626dafd18fc9f6562e7561ad182e82d816 openshiftrepo.example.com:443/ocp4/openshift4:kube-proxy
-info: Mirroring completed in 18.64s (0B/s)
+sha256:1a69a2bf32e9c39c4395de6c7fbcfbe8f430eb23476a8b85036e67e60050ce53 openshiftrepo.example.com:443/ocp4/openshift4:4.3.26-cluster-authentication-operator
+info: Mirroring completed in 1m27.76s (8.084MB/s)
 
 Success
-Update image:  openshiftrepo.example.com:443/ocp4/openshift4:4.2.0
+Update image:  openshiftrepo.example.com:443/ocp4/openshift4:4.3.26-x86_64
 Mirror prefix: openshiftrepo.example.com:443/ocp4/openshift4
 
 To use the new mirrored repository to install, add the following section to the install-config.yaml:
