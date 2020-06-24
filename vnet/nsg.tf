@@ -1,23 +1,21 @@
-resource "azurerm_network_security_group" "master" {
-  name                = "${var.cluster_id}-controlplane-nsg"
+resource "azurerm_network_security_group" "cluster" {
+  name                = "${var.cluster_id}-nsg"
   location            = var.region
   resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_subnet_network_security_group_association" "master" {
-  subnet_id                 = azurerm_subnet.master_subnet.id
-  network_security_group_id = azurerm_network_security_group.master.id
-}
+  count = var.preexisting_network ? 0 : 1
 
-resource "azurerm_network_security_group" "worker" {
-  name                = "${var.cluster_id}-node-nsg"
-  location            = var.region
-  resource_group_name = var.resource_group_name
+  subnet_id                 = azurerm_subnet.master_subnet[0].id
+  network_security_group_id = azurerm_network_security_group.cluster.id
 }
 
 resource "azurerm_subnet_network_security_group_association" "worker" {
-  subnet_id                 = azurerm_subnet.worker_subnet.id
-  network_security_group_id = azurerm_network_security_group.worker.id
+  count = var.preexisting_network ? 0 : 1
+
+  subnet_id                 = azurerm_subnet.worker_subnet[0].id
+  network_security_group_id = azurerm_network_security_group.cluster.id
 }
 
 resource "azurerm_network_security_rule" "apiserver_in" {
@@ -31,5 +29,5 @@ resource "azurerm_network_security_rule" "apiserver_in" {
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = var.resource_group_name
-  network_security_group_name = azurerm_network_security_group.master.name
+  network_security_group_name = azurerm_network_security_group.cluster.name
 }

@@ -82,17 +82,17 @@ variable "worker_vm_type" {
 
 variable "worker_os_disk_size" {
   type    = string
-  default = 128
+  default = 512
 }
 
 variable "infra_os_disk_size" {
   type    = string
-  default = 128
+  default = 512
 }
 
 variable "master_os_disk_size" {
   type    = string
-  default = 1024
+  default = 512
 }
 
 variable "azure_subscription_id" {
@@ -119,7 +119,23 @@ variable "virtual_network_name" {
   type = string
 }
 
+variable "network_resource_group_name" {
+  type = string
+}
+
+variable "control_plane_subnet" {
+  type = string
+}
+
+variable "compute_subnet" {
+  type = string
+}
+
 variable "private" {
+  type = bool
+}
+
+variable "outbound_udr" {
   type = bool
 }
 

@@ -5,12 +5,26 @@ baseDomain: ${var.base_domain}
 compute:
 - hyperthreading: Enabled
   name: worker
-  platform: {}
+  platform:
+    azure:
+      type: ${var.worker_vm_type}
+      osDisk:
+        diskSizeGB: ${var.worker_os_disk_size}
+        diskType: Premium_LRS
   replicas: ${var.node_count}
 controlPlane:
   hyperthreading: Enabled
   name: master
-  platform: {}
+  platform:
+    azure:
+      type: ${var.master_vm_type}
+      osDisk:
+        diskSizeGB: ${var.master_os_disk_size}
+        diskType: Premium_LRS
+      zones:
+      - "1"
+      - "2"
+      - "3"
   replicas: ${var.master_count}
 metadata:
   creationTimestamp: null
@@ -19,14 +33,22 @@ networking:
   clusterNetwork:
   - cidr: ${var.cluster_network_cidr}
     hostPrefix: ${var.cluster_network_host_prefix}
-  machineCIDR: ${var.machine_cidr}
+  machineNetwork:
+  - cidr: ${var.machine_cidr}
   networkType: OpenShiftSDN
   serviceNetwork:
   - ${var.service_network_cidr}
 platform:
   azure:
-    baseDomainResourceGroupName: ${var.azure_dns_resource_group_name}
     region: ${var.azure_region}
+    baseDomainResourceGroupName: ${var.azure_dns_resource_group_name}
+    networkResourceGroupName: ${var.network_resource_group_name}
+    virtualNetwork: ${var.virtual_network_name}
+    controlPlaneSubnet: ${var.control_plane_subnet}
+    computeSubnet: ${var.compute_subnet}
+    osDisk:
+      diskSizeGB: ${var.worker_os_disk_size}
+      diskType: Premium_LRS
 publish: ${var.private ? "Internal" : "External"}
 pullSecret: '${chomp(file(var.openshift_pull_secret))}'
 sshKey: '${var.public_ssh_key}'
@@ -117,8 +139,8 @@ data:
     \"\",\n\t\"useManagedIdentityExtension\": true,\n\t\"userAssignedIdentityID\":
     \"\",\n\t\"subscriptionId\": \"${var.azure_subscription_id}\",\n\t\"resourceGroup\":
     \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.virtual_network_name}\",\n\t\"vnetResourceGroup\":
-    \"${var.cluster_id}-rg\",\n\t\"subnetName\": \"${var.cluster_id}-worker-subnet\",\n\t\"securityGroupName\":
-    \"${var.cluster_id}-node-nsg\",\n\t\"routeTableName\": \"${var.cluster_id}-node-routetable\",\n\t\"primaryAvailabilitySetName\":
+    \"${var.network_resource_group_name}\",\n\t\"subnetName\": \"${var.compute_subnet}\",\n\t\"securityGroupName\":
+    \"${var.cluster_id}-nsg\",\n\t\"routeTableName\": \"${var.cluster_id}-node-routetable\",\n\t\"primaryAvailabilitySetName\":
     \"\",\n\t\"vmType\": \"\",\n\t\"primaryScaleSetName\": \"\",\n\t\"cloudProviderBackoff\":
     true,\n\t\"cloudProviderBackoffRetries\": 0,\n\t\"cloudProviderBackoffExponent\":
     0,\n\t\"cloudProviderBackoffDuration\": 6,\n\t\"cloudProviderBackoffJitter\":
@@ -188,7 +210,7 @@ spec:
       resourceGroup: ${var.cluster_id}-rg
       sshPrivateKey: ""
       sshPublicKey: ""
-      subnet: ${var.cluster_id}-master-subnet
+      subnet: ${var.control_plane_subnet}
       userDataSecret:
         name: master-user-data
       vmSize: ${var.master_vm_type}
@@ -268,7 +290,7 @@ spec:
           resourceGroup: ${var.cluster_id}-rg
           sshPrivateKey: ""
           sshPublicKey: ""
-          subnet: ${var.cluster_id}-worker-subnet
+          subnet: ${var.compute_subnet}
           userDataSecret:
             name: worker-user-data
           vmSize: ${var.worker_vm_type}
@@ -351,7 +373,7 @@ spec:
           resourceGroup: ${var.cluster_id}-rg
           sshPrivateKey: ""
           sshPublicKey: ""
-          subnet: ${var.cluster_id}-worker-subnet
+          subnet: ${var.compute_subnet}
           userDataSecret:
             name: worker-user-data
           vmSize: ${var.infra_vm_type}
@@ -370,39 +392,6 @@ resource "local_file" "openshift-cluster-api_infra-machineset" {
   ]
 }
 
-
-data "template_file" "ingresscontroller-default" {
-  template = <<EOF
-apiVersion: operator.openshift.io/v1
-kind: IngressController
-metadata:
-  finalizers:
-  - ingresscontroller.operator.openshift.io/finalizer-ingresscontroller
-  name: default
-  namespace: openshift-ingress-operator
-spec:
-  endpointPublishingStrategy:
-    loadBalancer:
-      scope: ${var.private ? "Internal" : "External"}
-    type: LoadBalancerService
-  replicas: 2
-%{if var.infra_count > 0}  nodePlacement:
-    nodeSelector:
-      matchLabels:
-        node-role.kubernetes.io/infra: ""
-%{endif}
-EOF
-}
-
-
-resource "local_file" "ingresscontroller-default" {
-  content  = data.template_file.ingresscontroller-default.rendered
-  filename = "${local.installer_workspace}/openshift/99_default_ingress_controller.yaml"
-  depends_on = [
-    null_resource.download_binaries,
-    null_resource.generate_manifests,
-  ]
-}
 
 data "template_file" "cloud-creds-secret-kube-system" {
   template = <<EOF
@@ -425,30 +414,6 @@ EOF
 resource "local_file" "cloud-creds-secret-kube-system" {
   content  = data.template_file.cloud-creds-secret-kube-system.rendered
   filename = "${local.installer_workspace}/openshift/99_cloud-creds-secret.yaml"
-  depends_on = [
-    null_resource.download_binaries,
-    null_resource.generate_manifests,
-  ]
-}
-
-data "template_file" "cluster-scheduler-02-config" {
-  template = <<EOF
-apiVersion: config.openshift.io/v1
-kind: Scheduler
-metadata:
-  creationTimestamp: null
-  name: cluster
-spec:
-  mastersSchedulable: false
-  policy:
-    name: ""
-status: {}
-EOF
-}
-
-resource "local_file" "cluster-scheduler-02-config" {
-  content  = data.template_file.cluster-scheduler-02-config.rendered
-  filename = "${local.installer_workspace}/manifests/cluster-scheduler-02-config.yml"
   depends_on = [
     null_resource.download_binaries,
     null_resource.generate_manifests,
@@ -549,12 +514,13 @@ spec:
       - name:  client
         image: quay.io/openshift/origin-cli:latest
         command: ["/bin/sh","-c"]
-        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"defaultRoute\": true%{if var.infra_count > 0},\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}%{endif}}}'"]
+        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
       restartPolicy: Never
 EOF
 }
 
 resource "local_file" "configure-image-registry-job" {
+  count    = var.infra_count > 0 ? 1 : 0
   content  = data.template_file.configure-image-registry-job.rendered
   filename = "${local.installer_workspace}/openshift/99_configure-image-registry-job.yml"
   depends_on = [
@@ -563,33 +529,32 @@ resource "local_file" "configure-image-registry-job" {
   ]
 }
 
-data "template_file" "private-cluster-outbound-service" {
-  count    = var.private ? 1 : 0
-  template = <<EOF
----
-apiVersion: v1	
-kind: Service	
-metadata:	
-  namespace: openshift-config-managed	
-  name: outbound-provider
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
-spec:	
-  type: LoadBalancer	
-  ports:	
-  - port: 27627	
-EOF	
-}
+# data "template_file" "private-cluster-outbound-service" {
+#   template = <<EOF
+# ---
+# apiVersion: v1	
+# kind: Service	
+# metadata:	
+#   namespace: openshift-config-managed	
+#   name: outbound-provider
+#   annotations:
+#     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+# spec:	
+#   type: LoadBalancer	
+#   ports:	
+#   - port: 27627	
+# EOF	
+# }
 
-resource "local_file" "private-cluster-outbound-service" {
-  count    = var.private ? 1 : 0
-  content  = element(data.template_file.private-cluster-outbound-service.*.rendered, count.index)
-  filename = "${local.installer_workspace}/openshift/99_private-cluster-outbound-service.yaml"
-  depends_on = [
-    null_resource.download_binaries,
-    null_resource.generate_manifests,
-  ]
-}
+# resource "local_file" "private-cluster-outbound-service" {
+#   count    = var.private ? (var.outbound_udr ? 0 : 1) : 0
+#   content  = data.template_file.private-cluster-outbound-service.rendered
+#   filename = "${local.installer_workspace}/openshift/99_private-cluster-outbound-service.yaml"
+#   depends_on = [
+#     null_resource.download_binaries,
+#     null_resource.generate_manifests,
+#   ]
+# }
 
 
 data "template_file" "airgapped_registry_upgrades" {
@@ -614,61 +579,6 @@ resource "local_file" "airgapped_registry_upgrades" {
   count    = var.airgapped["enabled"] ? 1 : 0
   content  = element(data.template_file.airgapped_registry_upgrades.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_airgapped_registry_upgrades.yaml"
-  depends_on = [
-    null_resource.download_binaries,
-    null_resource.generate_manifests,
-  ]
-}
-
-data "template_file" "cluster_autoscale" {
-  template = <<EOF
-apiVersion: "autoscaling.openshift.io/v1"
-kind: "ClusterAutoscaler"
-metadata:
-  name: "default"
-spec:
-  resourceLimits:
-    maxNodesTotal: 20
-  scaleDown:
-    enabled: true
-    delayAfterAdd: 10s
-    delayAfterDelete: 10s
-    delayAfterFailure: 10s
-EOF
-}
-
-resource "local_file" "cluster_autoscale" {
-  content  = data.template_file.cluster_autoscale.rendered
-  filename = "${local.installer_workspace}/openshift/99_configure_cluster_autoscale.yml"
-  depends_on = [
-    null_resource.download_binaries,
-    null_resource.generate_manifests,
-  ]
-}
-
-
-data "template_file" "machineset_autoscaler" {
-  count    = var.node_count
-  template = <<EOF
-apiVersion: autoscaling.openshift.io/v1beta1
-kind: MachineAutoscaler
-metadata:
-  name: ${var.cluster_id}-worker-${var.azure_region}${count.index + 1}
-  namespace: openshift-machine-api
-spec:
-  minReplicas: 1
-  maxReplicas: 2
-  scaleTargetRef:
-    apiVersion: machine.openshift.io/v1beta1
-    kind: MachineSet
-    name: ${var.cluster_id}-worker-${var.azure_region}${count.index + 1}
-EOF
-}
-
-resource "local_file" "machineset_autoscaler" {
-  count    = var.node_count
-  content  = element(data.template_file.machineset_autoscaler.*.rendered, count.index)
-  filename = "${local.installer_workspace}/openshift/99_configure_machineset_autoscaler_${count.index}.yml"
   depends_on = [
     null_resource.download_binaries,
     null_resource.generate_manifests,

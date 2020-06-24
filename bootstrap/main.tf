@@ -1,118 +1,164 @@
 locals {
-  bootstrap_nic_ip_configuration_name = "bootstrap-nic-ip"
+  bootstrap_nic_ip_v4_configuration_name = "bootstrap-nic-ip-v4"
+  bootstrap_nic_ip_v6_configuration_name = "bootstrap-nic-ip-v6"
 }
 
-resource "azurerm_public_ip" "bootstrap_public_ip" {
-  count = var.bootstrap_completed ? 0 : var.private ? 0 : 1
+
+resource "azurerm_public_ip" "bootstrap_public_ip_v4" {
+  count = var.private || ! var.use_ipv4 ? 0 : 1
 
   sku                 = "Standard"
   location            = var.region
-  name                = "${var.cluster_id}-bootstrap-pip"
+  name                = "${var.cluster_id}-bootstrap-pip-v4"
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
 }
 
-data "azurerm_public_ip" "bootstrap_public_ip" {
-  count = var.bootstrap_completed ? 0 : var.private ? 0 : 1
+data "azurerm_public_ip" "bootstrap_public_ip_v4" {
+  count = var.private ? 0 : 1
 
-  name                = azurerm_public_ip.bootstrap_public_ip[0].name
+  name                = azurerm_public_ip.bootstrap_public_ip_v4[0].name
+  resource_group_name = var.resource_group_name
+}
+
+resource "azurerm_public_ip" "bootstrap_public_ip_v6" {
+  count = var.private || ! var.use_ipv6 ? 0 : 1
+
+  sku                 = "Standard"
+  location            = var.region
+  name                = "${var.cluster_id}-bootstrap-pip-v6"
+  resource_group_name = var.resource_group_name
+  allocation_method   = "Static"
+  ip_version          = "IPv6"
+}
+
+data "azurerm_public_ip" "bootstrap_public_ip_v6" {
+  count = var.private || ! var.use_ipv6 ? 0 : 1
+
+  name                = azurerm_public_ip.bootstrap_public_ip_v6[0].name
   resource_group_name = var.resource_group_name
 }
 
 resource "azurerm_network_interface" "bootstrap" {
-  count = var.bootstrap_completed ? 0 : 1
-
   name                = "${var.cluster_id}-bootstrap-nic"
   location            = var.region
   resource_group_name = var.resource_group_name
 
-  ip_configuration {
-    subnet_id                     = var.subnet_id
-    name                          = local.bootstrap_nic_ip_configuration_name
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = var.private ? null : azurerm_public_ip.bootstrap_public_ip[0].id
+  dynamic "ip_configuration" {
+    for_each = [for ip in [
+      {
+        // LIMITATION: azure does not allow an ipv6 address to be primary today
+        primary : var.use_ipv4,
+        name : local.bootstrap_nic_ip_v4_configuration_name,
+        ip_address_version : "IPv4",
+        public_ip_id : var.private ? null : azurerm_public_ip.bootstrap_public_ip_v4[0].id,
+        include : var.use_ipv4 || var.use_ipv6,
+      },
+      {
+        primary : ! var.use_ipv4,
+        name : local.bootstrap_nic_ip_v6_configuration_name,
+        ip_address_version : "IPv6",
+        public_ip_id : var.private || ! var.use_ipv6 ? null : azurerm_public_ip.bootstrap_public_ip_v6[0].id,
+        include : var.use_ipv6,
+      },
+      ] : {
+      primary : ip.primary
+      name : ip.name
+      ip_address_version : ip.ip_address_version
+      public_ip_id : ip.public_ip_id
+      include : ip.include
+      } if ip.include
+    ]
+    content {
+      primary                       = ip_configuration.value.primary
+      name                          = ip_configuration.value.name
+      subnet_id                     = var.subnet_id
+      private_ip_address_version    = ip_configuration.value.ip_address_version
+      private_ip_address_allocation = "Dynamic"
+      public_ip_address_id          = ip_configuration.value.public_ip_id
+    }
   }
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap" {
-  count = var.bootstrap_completed ? 0 : var.private ? 0 : 1
+resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v4" {
+  // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+  // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+  count = (! var.private || ! var.outbound_udr) ? 1 : 0
 
-  network_interface_id    = element(azurerm_network_interface.bootstrap.*.id, count.index)
-  backend_address_pool_id = var.elb_backend_pool_id
-  ip_configuration_name   = local.bootstrap_nic_ip_configuration_name
+  network_interface_id    = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.elb_backend_pool_v4_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v4_configuration_name
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "internal_lb_bootstrap" {
-  count = var.bootstrap_completed ? 0 : 1
+resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v6" {
+  // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+  // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+  count = var.use_ipv6 && (! var.private || ! var.outbound_udr) ? 1 : 0
 
-  network_interface_id    = element(azurerm_network_interface.bootstrap.*.id, count.index)
-  backend_address_pool_id = var.ilb_backend_pool_id
-  ip_configuration_name   = local.bootstrap_nic_ip_configuration_name
+  network_interface_id    = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.elb_backend_pool_v6_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v6_configuration_name
 }
 
-resource "azurerm_virtual_machine" "bootstrap" {
-  count = var.bootstrap_completed ? 0 : 1
+resource "azurerm_network_interface_backend_address_pool_association" "internal_lb_bootstrap_v4" {
+  count = var.use_ipv4 ? 1 : 0
 
+  network_interface_id    = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.ilb_backend_pool_v4_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v4_configuration_name
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "internal_lb_bootstrap_v6" {
+  count = var.use_ipv6 ? 1 : 0
+
+  network_interface_id    = azurerm_network_interface.bootstrap.id
+  backend_address_pool_id = var.ilb_backend_pool_v6_id
+  ip_configuration_name   = local.bootstrap_nic_ip_v6_configuration_name
+}
+
+resource "azurerm_linux_virtual_machine" "bootstrap" {
   name                  = "${var.cluster_id}-bootstrap"
   location              = var.region
   resource_group_name   = var.resource_group_name
-  network_interface_ids = [element(azurerm_network_interface.bootstrap.*.id, count.index)]
-  vm_size               = var.vm_size
-
-  delete_os_disk_on_termination    = true
-  delete_data_disks_on_termination = true
+  network_interface_ids = [azurerm_network_interface.bootstrap.id]
+  size                  = var.vm_size
+  admin_username        = "core"
+  # The password is normally applied by WALA (the Azure agent), but this
+  # isn't installed in RHCOS. As a result, this password is never set. It is
+  # included here because it is required by the Azure ARM API.
+  admin_password                  = "NotActuallyApplied!"
+  disable_password_authentication = false
 
   identity {
     type         = "UserAssigned"
     identity_ids = [var.identity]
   }
 
-  storage_os_disk {
-    name              = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Premium_LRS"
-    disk_size_gb      = 100
+  os_disk {
+    name                 = "${var.cluster_id}-bootstrap_OSDisk" # os disk name needs to match cluster-api convention
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+    disk_size_gb         = 100
   }
 
-  storage_image_reference {
-    id = var.vm_image
-  }
+  source_image_id = var.vm_image
 
-  os_profile {
-    computer_name  = "${var.cluster_id}-bootstrap-vm"
-    admin_username = "core"
-    # The password is normally applied by WALA (the Azure agent), but this
-    # isn't installed in RHCOS. As a result, this password is never set. It is
-    # included here because it is required by the Azure ARM API.
-    admin_password = "NotActuallyApplied!"
-    custom_data    = var.ignition
-  }
-
-  os_profile_linux_config {
-    disable_password_authentication = false
-  }
+  computer_name = "${var.cluster_id}-bootstrap-vm"
+  custom_data   = base64encode(var.ignition)
 
   boot_diagnostics {
-    enabled     = true
-    storage_uri = var.storage_account.primary_blob_endpoint
+    storage_account_uri = var.storage_account.primary_blob_endpoint
   }
 
   depends_on = [
-    azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap,
-    azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap
+    azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap_v4,
+    azurerm_network_interface_backend_address_pool_association.public_lb_bootstrap_v6,
+    azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap_v4,
+    azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap_v6
   ]
-
-  lifecycle {
-    ignore_changes = [
-      os_profile
-    ]
-  }
 }
 
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {
-  count = var.bootstrap_completed ? 0 : 1
-
   name                        = "bootstrap_ssh_in"
   priority                    = 103
   direction                   = "Inbound"

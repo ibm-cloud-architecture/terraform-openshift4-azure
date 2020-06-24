@@ -66,15 +66,34 @@ On a separate resource group, [create an instance](https://docs.microsoft.com/en
 Once the registry is created, follow the RedHat Documentation from [Creating a pull secret for your mirror registry](https://docs.openshift.com/container-platform/4.2/installing/installing_restricted_networks/installing-restricted-networks-preparations.html#installation-local-registry-pull-secret_installing-restricted-networks-preparations) up to Step 4 of [Mirroring the OpenShift Container Platform image repository](https://docs.openshift.com/container-platform/4.2/installing/installing_restricted_networks/installing-restricted-networks-preparations.html#installation-mirror-repository_installing-restricted-networks-preparations)
 
 
-# Exposing the image registry to Terraform
+# Airgapped Scenarios
 
-In your terraform.tvfars, add the following at the bottom.
+## Private Endpoints with Egress Provided by Azure Public LB
+When `azure_private` is set to true, the `api` and `*.apps` domains are configured on Private LoadBalancers.  A public loadbalancer is created to provide egress access to the cluster, but no inbound access is allowed.  If you want to use a mirrored registry, you can also include the `airgapped` variable in your terraform.tfvars file
+
 ```terraform
 azure_private = true
 airgapped     = {
   enabled     = true
   repository  = "example.azurecr.io/ocp4/openshift4"
 }
+```
+
+## Private Endpoints with User Defined Routing
+In addition to `azure_private` and `airgapped` variables, you can set other variables that ensure all communication to your cluster are handled via internal endpoints and no traffic goes thru the Azure public network.  You are responsible for configuring addecuate access to the internet in your VNET (via a ExpressRoute, Proxies, etc).  Set the `azure_outbound_user_defined_routing` and `azure_preexisting_network` variabes to `true` and provide your VNET Resource Group, VNET Name and Control Plane and Compute Subnets
+
+```terraform
+azure_private = true
+airgapped     = {
+  enabled     = true
+  repository  = "example.azurecr.io/ocp4/openshift4"
+}
+azure_outbound_user_defined_routing = true
+azure_preexisting_network = true
+azure_network_resource_group_name = "yourNetworkResourceGroup"
+azure_virtual_network = "yourVNETName"
+azure_control_plane_subnet = "yourControlPlaneSubnetName"
+azure_compute_subnet = "yourComputeSubnetName"
 ```
 
 This ensures that terraform generates the `installer-config.yaml` and `ImageContentSourcePolicy` templates for a private, disconnected installation.

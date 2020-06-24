@@ -1,6 +1,8 @@
 #  Local .terraform directories
 **/.terraform/*
 
+
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
@@ -17,6 +19,7 @@ pull-secret
 # local
 makefile
 **/artifacts/*
+**/terraform.state.d/*
 
 # installer-files
 **/installer-files/*
@@ -24,3 +27,4 @@ makefile
 # optional files
 extras.tf
 vnet/nat-gateway.tf
+bastion.tf

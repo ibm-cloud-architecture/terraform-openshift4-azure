@@ -30,15 +30,19 @@ variable "instance_count" {
   type = string
 }
 
-variable "external_lb_id" {
+variable "elb_backend_pool_v4_id" {
   type = string
 }
 
-variable "elb_backend_pool_id" {
+variable "elb_backend_pool_v6_id" {
   type = string
 }
 
-variable "ilb_backend_pool_id" {
+variable "ilb_backend_pool_v4_id" {
+  type = string
+}
+
+variable "ilb_backend_pool_v6_id" {
   type = string
 }
 
@@ -82,7 +86,40 @@ variable "ignition" {
   type = string
 }
 
+variable "availability_zones" {
+  type        = list(string)
+  description = "List of the availability zones in which to create the masters. The length of this list must match instance_count."
+}
+
 variable "private" {
   type        = bool
   description = "This value determines if this is a private cluster or not."
+}
+
+variable "use_ipv4" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv4 networking."
+}
+
+variable "use_ipv6" {
+  type        = bool
+  description = "This value determines if this is cluster should use IPv6 networking."
+}
+
+variable "emulate_single_stack_ipv6" {
+  type        = bool
+  description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
+}
+
+variable "outbound_udr" {
+  type    = bool
+  default = false
+
+  description = <<EOF
+This determined whether User defined routing will be used for egress to Internet.
+When false, Standard LB will be used for egress to the Internet.
+
+This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
+conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
+EOF
 }
