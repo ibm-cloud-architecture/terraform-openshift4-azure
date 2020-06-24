@@ -101,8 +101,8 @@ resource "null_resource" "generate_manifests" {
   provisioner "local-exec" {
     command = <<EOF
 ${local.installer_workspace}/openshift-install --dir=${local.installer_workspace} create manifests
-rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-*
-rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-*
+#rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-*
+#rm ${local.installer_workspace}/openshift/99_openshift-cluster-api_master-machines-*
 EOF
   }
 }
@@ -120,11 +120,11 @@ resource "null_resource" "generate_ignition" {
     local_file.openshift-cluster-api_master-machines,
     local_file.openshift-cluster-api_worker-machineset,
     local_file.openshift-cluster-api_infra-machineset,
-    local_file.ingresscontroller-default,
+    #local_file.ingresscontroller-default,
     local_file.cloud-creds-secret-kube-system,
-    local_file.cluster-scheduler-02-config,
+    #local_file.cluster-scheduler-02-config,
     local_file.cluster-monitoring-configmap,
-    local_file.private-cluster-outbound-service,
+    #local_file.private-cluster-outbound-service,
   ]
 
   provisioner "local-exec" {
