@@ -199,7 +199,7 @@ spec:
       metadata:
         creationTimestamp: null
       natRule: null
-      networkResourceGroup: ${var.cluster_id}-rg
+      networkResourceGroup: ${var.var.network_resource_group_name}
       osDisk:
         diskSizeGB: ${var.master_os_disk_size}
         managedDisk:
@@ -279,7 +279,7 @@ spec:
           metadata:
             creationTimestamp: null
           natRule: null
-          networkResourceGroup: ${var.cluster_id}-rg
+          networkResourceGroup: ${var.var.network_resource_group_name}
           osDisk:
             diskSizeGB: ${var.worker_os_disk_size}
             managedDisk:
@@ -362,7 +362,7 @@ spec:
           metadata:
             creationTimestamp: null
           natRule: null
-          networkResourceGroup: ${var.cluster_id}-rg
+          networkResourceGroup: ${var.var.network_resource_group_name}
           osDisk:
             diskSizeGB: ${var.infra_os_disk_size}
             managedDisk:
