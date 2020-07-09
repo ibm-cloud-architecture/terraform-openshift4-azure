@@ -78,6 +78,7 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_outbound_user_defined_routing   | This determined whether User defined routing will be used for egress to Internet. When `false`, Standard LB will be used for egress to the Internet. | false | bool |
 | use_ipv4                              | This determines wether your cluster will use IPv4 networking | true | bool |
 | use_ipv6                              | This determines wether your cluster will use IPv6 networking | false | bool |
+| proxy_config                          | Configuration for Cluster wide proxy | [AirGapped](AIRGAPPED.md)| map |
 
 
 
