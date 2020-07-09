@@ -60,6 +60,14 @@ sshKey: '${var.public_ssh_key}'
   - ${var.airgapped["repository"]}
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 %{endif}
+%{if var.proxy_config["enabled"]}proxy:
+  httpProxy: ${var.proxy_config["httpProxy"]}
+  httpsProxy: ${var.proxy_config["httpsProxy"]}
+  noProxy: ${var.proxy_config["noProxy"]}
+%{if var.proxy_config["additionalTrustBundle"] != ""}
+${indent(2,"additionalTrustBundle: |\n${file(var.proxy_config["additionalTrustBundle"])}")}
+%{endif}
+%{endif}
 EOF
 }
 

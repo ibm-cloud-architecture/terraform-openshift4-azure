@@ -146,3 +146,14 @@ variable "airgapped" {
     repository = ""
   }
 }
+
+variable "proxy_config" {
+  type = map(string)
+  default = {
+    enabled               = false
+    httpProxy             = ""
+    httpsProxy            = ""
+    noProxy               = ""
+    additionalTrustBundle = ""
+  }
+}

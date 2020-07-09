@@ -103,6 +103,7 @@ module "ignition" {
   private                       = module.vnet.private
   outbound_udr                  = var.azure_outbound_user_defined_routing
   airgapped                     = var.airgapped
+  proxy_config                  = var.proxy_config
 }
 
 module "bootstrap" {

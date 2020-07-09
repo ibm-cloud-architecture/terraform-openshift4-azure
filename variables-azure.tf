@@ -248,3 +248,14 @@ variable "airgapped" {
     repository = ""
   }
 }
+
+variable "proxy_config" {
+  type = map(string)
+  default = {
+    enabled               = false
+    httpProxy             = "http://user:password@ip:port"
+    httpsProxy            = "http://user:password@ip:port"
+    noProxy               = "ip1,ip2,ip3,.example.com,cidr/mask"
+    additionalTrustBundle = "/path/to/bundle.pem" # set to "" for no additionalTrustBundle
+  }
+}
