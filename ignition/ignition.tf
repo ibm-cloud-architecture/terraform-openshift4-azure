@@ -48,7 +48,8 @@ resource "azurerm_storage_container" "ignition" {
 locals {
   installer_workspace     = "${path.root}/installer-files"
   openshift_installer_url = "${var.openshift_installer_url}/${var.openshift_version}"
-  cluster_nr              = element(split("-", "${var.cluster_id}"), 1)
+  cluster_nr              = join("", split("-", "${var.cluster_id}"))
+  # cluster_nr              = element(split("-", "${var.cluster_id}"), 1)
 }
 
 resource "null_resource" "download_binaries" {
@@ -65,7 +66,7 @@ case $(uname -s) in
     wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64 -O ${local.installer_workspace}/jq > /dev/null 2>&1\
     ;;
   Linux)
-    wget -r -l1 -np -nd -q ${local.installer_workspace} -P ${local.installer_workspace} -A 'openshift-install-linux-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${local.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-install-linux-4*.tar.gz'
     tar zxvf ${local.installer_workspace}/openshift-install-linux-4*.tar.gz -C ${local.installer_workspace}
     wget -r -l1 -np -nd -q ${local.openshift_installer_url} -P ${local.installer_workspace} -A 'openshift-client-linux-4*.tar.gz'
     tar zxvf ${local.installer_workspace}/openshift-client-linux-4*.tar.gz -C ${local.installer_workspace}
@@ -82,7 +83,7 @@ EOF
 
   provisioner "local-exec" {
     when    = destroy
-    command = "rm -rf ${local.installer_workspace}"
+    command = "rm -rf ./installer-files"
   }
 
 }

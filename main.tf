@@ -31,6 +31,18 @@ resource "local_file" "write_public_key" {
   file_permission = 0600
 }
 
+
+data "template_file" "azure_sp_json" {
+  template =<<EOF
+{"subscriptionId":"${var.azure_subscription_id}","clientId":"${var.azure_client_id}","clientSecret":"${var.azure_client_secret}","tenantId":"${var.azure_tenant_id}"}
+EOF
+}
+
+resource "local_file" "azure_sp_json" {
+  content = data.template_file.azure_sp_json.rendered
+  filename = "~/.azure/osServicePrincipal.json"
+}
+
 locals {
   cluster_id = "${var.cluster_name}-${random_string.cluster_id.result}"
   tags = merge(

@@ -65,7 +65,7 @@ sshKey: '${var.public_ssh_key}'
   httpsProxy: ${var.proxy_config["httpsProxy"]}
   noProxy: ${var.proxy_config["noProxy"]}
 %{if var.proxy_config["additionalTrustBundle"] != ""}
-${indent(2,"additionalTrustBundle: |\n${file(var.proxy_config["additionalTrustBundle"])}")}
+${indent(2, "additionalTrustBundle: |\n${file(var.proxy_config["additionalTrustBundle"])}")}
 %{endif}
 %{endif}
 EOF
@@ -537,32 +537,32 @@ resource "local_file" "configure-image-registry-job" {
   ]
 }
 
-# data "template_file" "private-cluster-outbound-service" {
-#   template = <<EOF
-# ---
-# apiVersion: v1	
-# kind: Service	
-# metadata:	
-#   namespace: openshift-config-managed	
-#   name: outbound-provider
-#   annotations:
-#     service.beta.kubernetes.io/azure-load-balancer-internal: "true"
-# spec:	
-#   type: LoadBalancer	
-#   ports:	
-#   - port: 27627	
-# EOF	
-# }
+data "template_file" "private-cluster-outbound-service" {
+  template = <<EOF
+---
+apiVersion: v1	
+kind: Service	
+metadata:	
+  namespace: openshift-config-managed	
+  name: outbound-provider
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:	
+  type: LoadBalancer	
+  ports:	
+  - port: 27627	
+EOF	
+}
 
-# resource "local_file" "private-cluster-outbound-service" {
-#   count    = var.private ? (var.outbound_udr ? 0 : 1) : 0
-#   content  = data.template_file.private-cluster-outbound-service.rendered
-#   filename = "${local.installer_workspace}/openshift/99_private-cluster-outbound-service.yaml"
-#   depends_on = [
-#     null_resource.download_binaries,
-#     null_resource.generate_manifests,
-#   ]
-# }
+resource "local_file" "private-cluster-outbound-service" {
+  count    = var.private ? (var.outbound_udr ? 0 : 1) : 0
+  content  = data.template_file.private-cluster-outbound-service.rendered
+  filename = "${local.installer_workspace}/openshift/99_private-cluster-outbound-service.yaml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
 
 
 data "template_file" "airgapped_registry_upgrades" {
