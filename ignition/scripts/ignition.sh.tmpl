@@ -1,0 +1,3 @@
+${installer_workspace}/openshift-install --dir=${installer_workspace} create ignition-configs --log-level=debug
+${installer_workspace}/jq '.infraID="${cluster_id}"' ${installer_workspace}/metadata.json > _metadata.json
+mv _metadata.json ${installer_workspace}/metadata.json

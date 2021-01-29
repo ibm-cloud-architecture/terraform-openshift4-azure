@@ -56,6 +56,10 @@ variable "resource_group_name" {
   type = string
 }
 
+variable "availability_zones" {
+  type = list(string)
+}
+
 variable "node_count" {
   type = string
 }
@@ -144,5 +148,16 @@ variable "airgapped" {
   default = {
     airgapped  = false
     repository = ""
+  }
+}
+
+variable "proxy_config" {
+  type = map(string)
+  default = {
+    enabled               = false
+    httpProxy             = ""
+    httpsProxy            = ""
+    noProxy               = ""
+    additionalTrustBundle = ""
   }
 }

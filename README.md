@@ -2,18 +2,15 @@
 
 This [terraform](terraform.io) implementation will deploy OpenShift 4.x into an Azure VNET, with two subnets for controlplane and worker nodes.  Traffic to the master nodes is handled via a pair of loadbalancers, one for internal traffic and another for external API traffic.  Application loadbalancing is handled by a third loadbalancer that talks to the router pods on the infra nodes.  Worker, Infra and Master nodes are deployed across 3 Availability Zones
 
-![Topology](./media/topology.svg) 
+![Topology](./media/topology.svg)
 
+## Prerequisites
 
+1. [Configure DNS](https://github.com/openshift/installer/blob/d0f7654bc4a0cf73392371962aef68cd9552b5dd/docs/user/azure/dnszone.md)
 
-# Prerequisites
+2. [Create a Service Principal](https://github.com/openshift/installer/blob/d0f7654bc4a0cf73392371962aef68cd9552b5dd/docs/user/azure/credentials.md) with proper IAM roles
 
-1.  [Configure DNS](https://github.com/openshift/installer/blob/d0f7654bc4a0cf73392371962aef68cd9552b5dd/docs/user/azure/dnszone.md) 
-
-2. [Create a Service Principal](https://github.com/openshift/installer/blob/d0f7654bc4a0cf73392371962aef68cd9552b5dd/docs/user/azure/credentials.md) with proper IAM roles 
-
-
-# Minimal TFVARS file
+## Minimal TFVARS file
 
 ```terraform
 azure_region = "eastus2"
@@ -30,9 +27,7 @@ azure_client_id        = "ZZZZZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZZZZZZZZZ"
 azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 ```
 
-
-
-# Customizable Variables
+## Customizable Variables
 
 | Variable                              | Description                                                    | Default         | Type   |
 | ------------------------------------- | -------------------------------------------------------------- | --------------- | ------ |
@@ -60,7 +55,7 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_master_root_volume_size         | Size of master node root volume                                | 512             | string |
 | azure_worker_root_volume_size         | Size of worker node root volume                                | 128             | string |
 | azure_infra_root_volume_size          | Size of infra node root volume                                 | 128             | string |
-| azure_master_root_volume_type         | Storage type for master root volume                            | Premium_LRS     | string | 
+| azure_master_root_volume_type         | Storage type for master root volume                            | Premium_LRS     | string |
 | azure_image_url                       | URL of the CoreOS image.                                       | [URL](https://rhcos.blob.core.windows.net/imagebucket/rhcos-43.81.202003111353.0-azure.x86_64.vhd) | string |
 | openshift_version                     | Version of OpenShift to deploy.                                | 4.3.26          | strig |
 | bootstrap_completed                   | Control variable to delete bootstrap node after initialization | false           | bool |
@@ -70,6 +65,7 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_environment                     | The target Azure cloud environment for the cluster             | public | string |
 | azure_master_availability_zones       | The availability zones in which to create the masters. The length of this list must match `master_count`| ["1","2","3"]| list |
 | azure_preexisting_network             | Specifies whether an existing network should be used or a new one created for installation. | false | bool |
+| azure_resource_group_name             | The name of the resource group for the cluster. If this is set, the cluster is installed to that existing resource group otherwise a new resource group will be created using cluster id. | -               | string |
 | azure_network_resource_group_name     | The name of the network resource group, either existing or to be created | `null` | string |
 | azure_virtual_network                 | The name of the virtual network, either existing or to be created | `null` | string |
 | azure_control_plane_subnet            | The name of the subnet for the control plane, either existing or to be created | `null` | string |
@@ -78,68 +74,74 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_outbound_user_defined_routing   | This determined whether User defined routing will be used for egress to Internet. When `false`, Standard LB will be used for egress to the Internet. | false | bool |
 | use_ipv4                              | This determines wether your cluster will use IPv4 networking | true | bool |
 | use_ipv6                              | This determines wether your cluster will use IPv6 networking | false | bool |
+| proxy_config                          | Configuration for Cluster wide proxy | [AirGapped](AIRGAPPED.md)| map |
 
-
-
-# Deploy with Terraform
+## Deploy with Terraform
 
 1. Clone github repository
-```bash
-git clone git@github.com:ibm-cloud-architecture/terraform-openshift4-azure.git
-```
+
+    ```bash
+    git clone git@github.com:ibm-cloud-architecture/terraform-openshift4-azure.git
+    ```
 
 2. Create your `terraform.tfvars` file
 
 3. Deploy with terraform
-```bash
-$ terraform init
-$ terraform plan
-$ terraform apply
-```
-4.  Destroy bootstrap node
-```bash
-$ TF_VAR_bootstrap_complete=true terraform apply
-```
-5.  To access your cluster
-```bash
- $ export KUBECONFIG=$PWD/installer-files/auth/kubeconfig
- $ oc get nodes
-NAME                                STATUS   ROLES          AGE     VERSION
-ocp43-6s3ag-infra-eastus21-zgv9p    Ready    infra,worker   2m52s   v1.14.6+c07e432da
-ocp43-6s3ag-infra-eastus22-7dr7x    Ready    infra,worker   2m42s   v1.14.6+c07e432da
-ocp43-6s3ag-infra-eastus23-7d22g    Ready    infra,worker   2m4s    v1.14.6+c07e432da
-ocp43-6s3ag-master-0                Ready    master         9m24s   v1.14.6+c07e432da
-ocp43-6s3ag-master-1                Ready    master         10m     v1.14.6+c07e432da
-ocp43-6s3ag-master-2                Ready    master         9m44s   v1.14.6+c07e432da
-ocp43-6s3ag-worker-eastus21-q62tb   Ready    worker         2m42s   v1.14.6+c07e432da
-ocp43-6s3ag-worker-eastus22-tdc2q   Ready    worker         2m53s   v1.14.6+c07e432da
-ocp43-6s3ag-worker-eastus23-wmwzz   Ready    worker         2m56s   v1.14.6+c07e432da
-```
 
+    ```bash
+    terraform init
+    terraform plan
+    terraform apply
+    ```
 
+4. Destroy bootstrap node
 
-# Infra and Worker Node Deployment
+    ```bash
+    TF_VAR_bootstrap_complete=true terraform apply
+    ```
+
+5. To access your cluster
+
+    ```bash
+    $ export KUBECONFIG=$PWD/installer-files/auth/kubeconfig
+    $ oc get nodes
+    NAME                                 STATUS   ROLES          AGE   VERSION
+    fs2021-hv0eu-infra-eastus21-6kqlt    Ready    infra,worker   20m   v1.19.0+3b01205
+    fs2021-hv0eu-infra-eastus22-m826l    Ready    infra,worker   20m   v1.19.0+3b01205
+    fs2021-hv0eu-infra-eastus23-qf4kc    Ready    infra,worker   19m   v1.19.0+3b01205
+    fs2021-hv0eu-master-0                Ready    master         30m   v1.19.0+3b01205
+    fs2021-hv0eu-master-1                Ready    master         30m   v1.19.0+3b01205
+    fs2021-hv0eu-master-2                Ready    master         30m   v1.19.0+3b01205
+    fs2021-hv0eu-worker-eastus21-bw8nq   Ready    worker         19m   v1.19.0+3b01205
+    fs2021-hv0eu-worker-eastus22-rtwwh   Ready    worker         20m   v1.19.0+3b01205
+    fs2021-hv0eu-worker-eastus23-tsw44   Ready    worker         20m   v1.19.0+3b01205
+    ```
+
+## Infra and Worker Node Deployment
 
 Deployment of Openshift Worker and Infra nodes is handled by the machine-operator-api cluster operator.
 
 ```bash
 $ oc get machineset -n openshift-machine-api
-NAME                          DESIRED   CURRENT   READY   AVAILABLE   AGE
-ocp43-f5k8m-infra-eastus21    1         1         1       1           12h
-ocp43-f5k8m-infra-eastus22    1         1         1       1           12h
-ocp43-f5k8m-infra-eastus23    1         1         1       1           12h
-ocp43-f5k8m-worker-eastus21   1         1         1       1           12h
-ocp43-f5k8m-worker-eastus22   1         1         1       1           12h
-ocp43-f5k8m-worker-eastus23   1         1         1       1           12h
+NAME                           DESIRED   CURRENT   READY   AVAILABLE   AGE
+fs2021-hv0eu-infra-eastus21    1         1         1       1           35m
+fs2021-hv0eu-infra-eastus22    1         1         1       1           35m
+fs2021-hv0eu-infra-eastus23    1         1         1       1           35m
+fs2021-hv0eu-worker-eastus21   1         1         1       1           35m
+fs2021-hv0eu-worker-eastus22   1         1         1       1           35m
+fs2021-hv0eu-worker-eastus23   1         1         1       1           35m
 
 $ oc get machines -n openshift-machine-api
 NAME                                STATE     TYPE              REGION    ZONE   AGE
-ocp43-f5k8m-infra-eastus21-7f9sv    Running   Standard_D4s_v3   eastus2   1      12h
-ocp43-f5k8m-infra-eastus22-tsh7s    Running   Standard_D4s_v3   eastus2   2      12h
-ocp43-f5k8m-infra-eastus23-vw5mc    Running   Standard_D4s_v3   eastus2   3      12h
-ocp43-f5k8m-worker-eastus21-8sgs5   Running   Standard_D8s_v3   eastus2   1      12h
-ocp43-f5k8m-worker-eastus22-zqmc5   Running   Standard_D8s_v3   eastus2   2      12h
-ocp43-f5k8m-worker-eastus23-q9g5v   Running   Standard_D8s_v3   eastus2   3      12h
-```
+NAME                                 PHASE     TYPE              REGION    ZONE   AGE
+fs2021-hv0eu-infra-eastus21-6kqlt    Running   Standard_D4s_v3   eastus2   1      31m
+fs2021-hv0eu-infra-eastus22-m826l    Running   Standard_D4s_v3   eastus2   2      31m
+fs2021-hv0eu-infra-eastus23-qf4kc    Running   Standard_D4s_v3   eastus2   3      31m
+fs2021-hv0eu-master-0                Running   Standard_D8s_v3   eastus2   1      37m
+fs2021-hv0eu-master-1                Running   Standard_D8s_v3   eastus2   2      37m
+fs2021-hv0eu-master-2                Running   Standard_D8s_v3   eastus2   3      37m
+fs2021-hv0eu-worker-eastus21-bw8nq   Running   Standard_D8s_v3   eastus2   1      31m
+fs2021-hv0eu-worker-eastus22-rtwwh   Running   Standard_D8s_v3   eastus2   2      31m
+fs2021-hv0eu-worker-eastus23-tsw44   Running   Standard_D8s_v3   eastus2   3      31m
 
 The infra nodes host the router/ingress pods, all the monitoring infrastrucutre, and the image registry.

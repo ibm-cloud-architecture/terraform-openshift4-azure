@@ -100,3 +100,16 @@ azure_compute_subnet = "yourComputeSubnetName"
 ```
 
 This ensures that terraform generates the `installer-config.yaml` and `ImageContentSourcePolicy` templates for a private, disconnected installation.
+
+## Proxied Environments
+When `proxy_config` is set, the cluster wide proxy will be configured during install for your OCP cluster.  You can specify your http and https proxies, any addresses that are not to be proxied, as well as the certificate trust bundle for your proxy.  When `proxy_config.enabled` is set to true, your install-config.yaml will be auto-generated with the proper proxy configuration
+
+```terraform
+proxy_config = {
+  enabled               = true                                         # set to true to enable proxy configuration
+  httpProxy             = "http://user:password@proxy.example.com:80"  # only supports http proxies at this time
+  httpsProxy            = "http://user:password@proxy.example.com:80"  # only supports http proxies at this time
+  noProxy               = "ip1,ip2,ip3,.example.com,10.0.0.0/8"        # comma delimited values
+  additionalTrustBundle = "/path/to/trust/bundle.pem"                  # set to "" for no additionalTrustBundle
+}
+```
