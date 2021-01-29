@@ -56,6 +56,10 @@ variable "resource_group_name" {
   type = string
 }
 
+variable "availability_zones" {
+  type = list(string)
+}
+
 variable "node_count" {
   type = string
 }

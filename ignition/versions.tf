@@ -4,7 +4,7 @@ terraform {
       source = "hashicorp/azurerm"
     }
     ignition = {
-      source = "terraform-providers/ignition"
+      source = "community-terraform-providers/ignition"
     }
     local = {
       source = "hashicorp/local"

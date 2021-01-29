@@ -46,6 +46,7 @@ platform:
     virtualNetwork: ${var.virtual_network_name}
     controlPlaneSubnet: ${var.control_plane_subnet}
     computeSubnet: ${var.compute_subnet}
+    outboundType: ${var.outbound_udr ? "UserDefinedRouting" : "Loadbalancer"}
     osDisk:
       diskSizeGB: ${var.worker_os_disk_size}
       diskType: Premium_LRS
@@ -98,7 +99,7 @@ status:
   platform: Azure
   platformStatus:
     azure:
-      resourceGroupName: ${var.cluster_id}-rg
+      resourceGroupName: ${var.resource_group_name}
     type: Azure
 EOF
 }
@@ -122,7 +123,7 @@ metadata:
 spec:
   baseDomain: ${var.cluster_name}.${var.base_domain}
   privateZone:
-    id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.cluster_id}-rg/providers/Microsoft.Network/privateDnsZones/${var.cluster_name}.${var.base_domain}
+    id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateDnsZones/${var.cluster_name}.${var.base_domain}
   publicZone:
     id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.azure_dns_resource_group_name}/providers/Microsoft.Network/dnszones/${var.base_domain}
 status: {}
@@ -146,7 +147,7 @@ data:
     \"\",\n\t\"aadClientSecret\": \"\",\n\t\"aadClientCertPath\": \"\",\n\t\"aadClientCertPassword\":
     \"\",\n\t\"useManagedIdentityExtension\": true,\n\t\"userAssignedIdentityID\":
     \"\",\n\t\"subscriptionId\": \"${var.azure_subscription_id}\",\n\t\"resourceGroup\":
-    \"${var.cluster_id}-rg\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.virtual_network_name}\",\n\t\"vnetResourceGroup\":
+    \"${var.resource_group_name}\",\n\t\"location\": \"${var.azure_region}\",\n\t\"vnetName\": \"${var.virtual_network_name}\",\n\t\"vnetResourceGroup\":
     \"${var.network_resource_group_name}\",\n\t\"subnetName\": \"${var.compute_subnet}\",\n\t\"securityGroupName\":
     \"${var.cluster_id}-nsg\",\n\t\"routeTableName\": \"${var.cluster_id}-node-routetable\",\n\t\"primaryAvailabilitySetName\":
     \"\",\n\t\"vmType\": \"\",\n\t\"primaryScaleSetName\": \"\",\n\t\"cloudProviderBackoff\":
@@ -197,7 +198,7 @@ spec:
       image:
         offer: ""
         publisher: ""
-        resourceID: /resourceGroups/${var.cluster_id}-rg/providers/Microsoft.Compute/images/${var.cluster_id}
+        resourceID: /resourceGroups/${var.resource_group_name}/providers/Microsoft.Compute/images/${var.cluster_id}
         sku: ""
         version: ""
       internalLoadBalancer: ""
@@ -215,7 +216,7 @@ spec:
         osType: Linux
       publicIP: false
       publicLoadBalancer: ""
-      resourceGroup: ${var.cluster_id}-rg
+      resourceGroup: ${var.resource_group_name}
       sshPrivateKey: ""
       sshPublicKey: ""
       subnet: ${var.control_plane_subnet}
@@ -223,8 +224,7 @@ spec:
         name: master-user-data
       vmSize: ${var.master_vm_type}
       vnet: ${var.virtual_network_name}
-      zone: "${count.index + 1}"
-status: {}
+      %{if length(var.availability_zones) > 1}zone: "${var.availability_zones[count.index]}"%{endif}
 EOF
 }
 
@@ -237,9 +237,13 @@ resource "local_file" "openshift-cluster-api_master-machines" {
     null_resource.generate_manifests,
   ]
 }
+locals {
+  zone_node_replicas  = [for idx in range(length(var.availability_zones)) : floor(var.node_count / length(var.availability_zones)) + (idx + 1 > (var.node_count % length(var.availability_zones)) ? 0 : 1)]
+  zone_infra_replicas = [for idx in range(length(var.availability_zones)) : floor(var.infra_count / length(var.availability_zones)) + (idx + 1 > (var.infra_count % length(var.availability_zones)) ? 0 : 1)]
+}
 
 data "template_file" "openshift-cluster-api_worker-machineset" {
-  count    = var.node_count
+  count    = length(var.availability_zones)
   template = <<EOF
 apiVersion: machine.openshift.io/v1beta1
 kind: MachineSet
@@ -252,7 +256,7 @@ metadata:
   name: ${var.cluster_id}-worker-${var.azure_region}${count.index + 1}
   namespace: openshift-machine-api
 spec:
-  replicas: 1
+  replicas: ${local.zone_node_replicas[count.index]}
   selector:
     matchLabels:
       machine.openshift.io/cluster-api-cluster: ${var.cluster_id}
@@ -277,7 +281,7 @@ spec:
           image:
             offer: ""
             publisher: ""
-            resourceID: /resourceGroups/${var.cluster_id}-rg/providers/Microsoft.Compute/images/${var.cluster_id}
+            resourceID: /resourceGroups/${var.resource_group_name}/providers/Microsoft.Compute/images/${var.cluster_id}
             sku: ""
             version: ""
           internalLoadBalancer: ""
@@ -295,7 +299,7 @@ spec:
             osType: Linux
           publicIP: false
           publicLoadBalancer: ""
-          resourceGroup: ${var.cluster_id}-rg
+          resourceGroup: ${var.resource_group_name}
           sshPrivateKey: ""
           sshPublicKey: ""
           subnet: ${var.compute_subnet}
@@ -303,14 +307,12 @@ spec:
             name: worker-user-data
           vmSize: ${var.worker_vm_type}
           vnet: ${var.virtual_network_name}
-          zone: "${count.index + 1}"
-status:
-  replicas: 0
+          %{if length(var.availability_zones) > 1}zone: "${var.availability_zones[count.index]}"%{endif}
 EOF
 }
 
 resource "local_file" "openshift-cluster-api_worker-machineset" {
-  count    = var.node_count
+  count    = length(var.availability_zones)
   content  = element(data.template_file.openshift-cluster-api_worker-machineset.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_worker-machineset-${count.index}.yaml"
   depends_on = [
@@ -320,7 +322,7 @@ resource "local_file" "openshift-cluster-api_worker-machineset" {
 }
 
 data "template_file" "openshift-cluster-api_infra-machineset" {
-  count    = var.infra_count
+  count    = var.infra_count > 0 ? length(var.availability_zones) : 0
   template = <<EOF
 apiVersion: machine.openshift.io/v1beta1
 kind: MachineSet
@@ -333,7 +335,7 @@ metadata:
   name: ${var.cluster_id}-infra-${var.azure_region}${count.index + 1}
   namespace: openshift-machine-api
 spec:
-  replicas: 1
+  replicas: ${local.zone_infra_replicas[count.index]}
   selector:
     matchLabels:
       machine.openshift.io/cluster-api-cluster: ${var.cluster_id}
@@ -360,7 +362,7 @@ spec:
           image:
             offer: ""
             publisher: ""
-            resourceID: /resourceGroups/${var.cluster_id}-rg/providers/Microsoft.Compute/images/${var.cluster_id}
+            resourceID: /resourceGroups/${var.resource_group_name}/providers/Microsoft.Compute/images/${var.cluster_id}
             sku: ""
             version: ""
           internalLoadBalancer: ""
@@ -378,7 +380,7 @@ spec:
             osType: Linux
           publicIP: false
           publicLoadBalancer: ""
-          resourceGroup: ${var.cluster_id}-rg
+          resourceGroup: ${var.resource_group_name}
           sshPrivateKey: ""
           sshPublicKey: ""
           subnet: ${var.compute_subnet}
@@ -386,12 +388,12 @@ spec:
             name: worker-user-data
           vmSize: ${var.infra_vm_type}
           vnet: ${var.virtual_network_name}
-          zone: "${count.index + 1}"
+          %{if length(var.availability_zones) > 1}zone: "${var.availability_zones[count.index]}"%{endif}
 EOF
 }
 
 resource "local_file" "openshift-cluster-api_infra-machineset" {
-  count    = var.infra_count
+  count    = var.infra_count > 0 ? length(var.availability_zones) : 0
   content  = element(data.template_file.openshift-cluster-api_infra-machineset.*.rendered, count.index)
   filename = "${local.installer_workspace}/openshift/99_openshift-cluster-api_infra-machineset-${count.index}.yaml"
   depends_on = [
@@ -414,7 +416,7 @@ data:
   azure_client_secret: ${base64encode(var.azure_client_secret)}
   azure_tenant_id: ${base64encode(var.azure_tenant_id)}
   azure_resource_prefix: ${base64encode(var.cluster_id)}
-  azure_resourcegroup: ${base64encode("${var.cluster_id}-rg")}
+  azure_resourcegroup: ${base64encode(var.resource_group_name)}
   azure_region: ${base64encode(var.azure_region)}
 EOF
 }
@@ -458,6 +460,12 @@ data:
     telemeterClient:
       nodeSelector:
         node-role.kubernetes.io/infra: ""
+    openshiftStateMetrics:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
+    thanosQuerier:
+      nodeSelector:
+        node-role.kubernetes.io/infra: ""
 EOF
 }
 
@@ -472,15 +480,28 @@ resource "local_file" "cluster-monitoring-configmap" {
 }
 
 
-data "template_file" "configure-image-registry-job" {
+data "template_file" "configure-image-registry-job-serviceaccount" {
   template = <<EOF
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: infra
   namespace: openshift-image-registry
----
+EOF
+}
+
+resource "local_file" "configure-image-registry-job-serviceaccount" {
+  count    = var.infra_count > 0 ? 1 : 0
+  content  = data.template_file.configure-image-registry-job-serviceaccount.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-image-registry-job-serviceaccount.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "configure-image-registry-job-clusterrole" {
+  template = <<EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -489,8 +510,23 @@ rules:
 - apiGroups: ['imageregistry.operator.openshift.io']
   resources: ['configs']
   verbs:     ['get','patch']
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
+  resourceNames: ['cluster']
+EOF
+}
+
+resource "local_file" "configure-image-registry-job-clusterrole" {
+  count    = var.infra_count > 0 ? 1 : 0
+  content  = data.template_file.configure-image-registry-job-clusterrole.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-image-registry-job-clusterrole.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "configure-image-registry-job-clusterrolebinding" {
+  template = <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: system:ibm-patch-cluster-storage
@@ -502,7 +538,21 @@ subjects:
   - kind: ServiceAccount
     name: default
     namespace: openshift-image-registry
----
+EOF
+}
+
+resource "local_file" "configure-image-registry-job-clusterrolebinding" {
+  count    = var.infra_count > 0 ? 1 : 0
+  content  = data.template_file.configure-image-registry-job-clusterrolebinding.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-image-registry-job-clusterrolebinding.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "configure-image-registry-job" {
+  template = <<EOF
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -522,7 +572,7 @@ spec:
       - name:  client
         image: quay.io/openshift/origin-cli:latest
         command: ["/bin/sh","-c"]
-        args: ["while ! /usr/bin/oc get configs cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs cluster --type merge --patch '{\"spec\": {\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
+        args: ["while ! /usr/bin/oc get configs.imageregistry.operator.openshift.io cluster >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch configs.imageregistry.operator.openshift.io cluster --type merge --patch '{\"spec\": {\"nodeSelector\": {\"node-role.kubernetes.io/infra\": \"\"}}}'"]
       restartPolicy: Never
 EOF
 }
@@ -536,6 +586,114 @@ resource "local_file" "configure-image-registry-job" {
     null_resource.generate_manifests,
   ]
 }
+
+data "template_file" "configure-ingress-job-serviceaccount" {
+  template = <<EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: infra
+  namespace: openshift-ingress-operator
+EOF
+}
+
+resource "local_file" "configure-ingress-job-serviceaccount" {
+  count    = var.infra_count > 0 ? 1 : 0
+  content  = data.template_file.configure-ingress-job-serviceaccount.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-ingress-job-serviceaccount.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "configure-ingress-job-clusterrole" {
+  template = <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:ibm-patch-ingress
+rules:
+- apiGroups:     ['operator.openshift.io']
+  resources:     ['ingresscontrollers']
+  verbs:         ['get','patch']
+  resourceNames: ['default']
+EOF
+}
+
+resource "local_file" "configure-ingress-job-clusterrole" {
+  count    = var.infra_count > 0 ? 1 : 0
+  content  = data.template_file.configure-ingress-job-clusterrole.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-ingress-job-clusterrole.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "configure-ingress-job-clusterrolebinding" {
+  template = <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:ibm-patch-ingress
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:ibm-patch-ingress
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: openshift-ingress-operator
+EOF
+}
+
+resource "local_file" "configure-ingress-job-clusterrolebinding" {
+  count    = var.infra_count > 0 ? 1 : 0
+  content  = data.template_file.configure-ingress-job-clusterrolebinding.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-ingress-job-clusterrolebinding.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
+data "template_file" "configure-ingress-job" {
+  template = <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ibm-configure-ingress
+  namespace: openshift-ingress-operator
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: configure-ingress
+      labels:
+        app: configure-ingress
+    serviceAccountName: infra
+    spec:
+      containers:
+      - name:  client
+        image: quay.io/openshift/origin-cli:latest
+        command: ["/bin/sh","-c"]
+        args: ["while ! /usr/bin/oc get ingresscontrollers.operator.openshift.io default -n openshift-ingress-operator >/dev/null 2>&1; do sleep 1;done;/usr/bin/oc patch ingresscontrollers.operator.openshift.io default -n openshift-ingress-operator --type merge --patch '{\"spec\": {\"nodePlacement\": {\"nodeSelector\": {\"matchLabels\": {\"node-role.kubernetes.io/infra\": \"\"}}}}}'"]
+      restartPolicy: Never
+EOF
+}
+
+resource "local_file" "configure-ingress-job" {
+  count    = var.infra_count > 0 ? 1 : 0
+  content  = data.template_file.configure-ingress-job.rendered
+  filename = "${local.installer_workspace}/openshift/99_configure-ingress-job.yml"
+  depends_on = [
+    null_resource.download_binaries,
+    null_resource.generate_manifests,
+  ]
+}
+
 
 data "template_file" "private-cluster-outbound-service" {
   template = <<EOF

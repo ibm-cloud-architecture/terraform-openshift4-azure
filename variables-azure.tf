@@ -27,8 +27,8 @@ variable "azure_bootstrap_vm_type" {
 
 variable "azure_master_vm_type" {
   type        = string
-  description = "Instance type for the master node(s). Example: `Standard_DS4_v3`."
-  default     = "Standard_D4s_v3"
+  description = "Instance type for the master node(s). Example: `Standard_D8s_v3`."
+  default     = "Standard_D8s_v3"
 }
 
 variable "azure_extra_tags" {
@@ -64,7 +64,7 @@ variable "azure_base_domain_resource_group_name" {
 variable "azure_image_url" {
   type        = string
   description = "The URL of the vm image used for all nodes."
-  default     = "https://rhcos.blob.core.windows.net/imagebucket/rhcos-43.81.202003111353.0-azure.x86_64.vhd"
+  default     = "https://rhcos.blob.core.windows.net/imagebucket/rhcos-46.82.202011260640-0-azure.x86_64.vhd"
 }
 
 variable "azure_subscription_id" {
@@ -95,12 +95,25 @@ variable "azure_master_availability_zones" {
     "2",
     "3",
   ]
+  validation {
+    condition     = length(var.azure_master_availability_zones) == 1 || length(var.azure_master_availability_zones) == 3
+    error_message = "The azure_master_availability_zones variable must be set to either [1] or [1, 2, 3] zones."
+  }
 }
 
 variable "azure_preexisting_network" {
   type        = bool
   default     = false
   description = "Specifies whether an existing network should be used or a new one created for installation."
+}
+
+variable "azure_resource_group_name" {
+  type        = string
+  default     = ""
+  description = <<EOF
+The name of the resource group for the cluster. If this is set, the cluster is installed to that existing resource group
+otherwise a new resource group will be created using cluster id.
+EOF
 }
 
 variable "azure_network_resource_group_name" {
@@ -198,7 +211,7 @@ variable "use_ipv6" {
 
 variable "openshift_version" {
   type    = string
-  default = "4.3.26"
+  default = "4.6.13"
 }
 
 variable "openshift_pull_secret" {
@@ -219,11 +232,19 @@ variable "azure_worker_root_volume_size" {
 variable "master_count" {
   type    = string
   default = 3
+  validation {
+    condition     = var.master_count == "3"
+    error_message = "The master_count value must be set to 3."
+  }
 }
 
 variable "worker_count" {
   type    = string
   default = 3
+  validation {
+    condition     = var.worker_count > 1
+    error_message = "The worker_count value must be greater than 1."
+  }
 }
 
 variable "infra_count" {
@@ -238,7 +259,7 @@ variable "azure_infra_vm_type" {
 
 variable "azure_worker_vm_type" {
   type    = string
-  default = "Standard_D4s_v3"
+  default = "Standard_D8s_v3"
 }
 
 variable "airgapped" {

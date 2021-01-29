@@ -86,7 +86,7 @@ resource "azurerm_linux_virtual_machine" "master" {
 
   name                  = "${var.cluster_id}-master-${count.index}"
   location              = var.region
-  zone                  = var.availability_zones[count.index]
+  zone                  = length(var.availability_zones) > 1 ? var.availability_zones[count.index] : var.availability_zones[0]
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.master.*.id, count.index)]
   size                  = var.vm_size
