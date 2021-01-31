@@ -14,10 +14,10 @@ This [terraform](terraform.io) implementation will deploy OpenShift 4.x into an 
 
 ```terraform
 azure_region = "eastus2"
-cluster_name = "ocp43"
+cluster_name = "ocp46"
 
 # From Prereq. Step #1
-base_domain                           = "azure.ncolon.xyz"
+base_domain                           = "azure.example.com"
 azure_base_domain_resource_group_name = "openshift4-common-rg"
 
 # From Prereq. Step #2
@@ -57,7 +57,7 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_infra_root_volume_size          | Size of infra node root volume                                 | 128             | string |
 | azure_master_root_volume_type         | Storage type for master root volume                            | Premium_LRS     | string |
 | azure_image_url                       | URL of the CoreOS image.                                       | [URL](https://rhcos.blob.core.windows.net/imagebucket/rhcos-43.81.202003111353.0-azure.x86_64.vhd) | string |
-| openshift_version                     | Version of OpenShift to deploy.                                | 4.3.26          | strig |
+| openshift_version                     | Version of OpenShift to deploy.                                | 4.6.13          | strig |
 | bootstrap_completed                   | Control variable to delete bootstrap node after initialization | false           | bool |
 | azure_private                         | If set to `true` will deploy `api` and `*.apps` endpoints as private LoadBalancers | - | bool |
 | azure_extra_tags                      | Extra Azure tags to be applied to created resources            | {}              | map |
