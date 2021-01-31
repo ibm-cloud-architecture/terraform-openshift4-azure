@@ -142,5 +142,6 @@ fs2021-hv0eu-master-2                Running   Standard_D8s_v3   eastus2   3    
 fs2021-hv0eu-worker-eastus21-bw8nq   Running   Standard_D8s_v3   eastus2   1      31m
 fs2021-hv0eu-worker-eastus22-rtwwh   Running   Standard_D8s_v3   eastus2   2      31m
 fs2021-hv0eu-worker-eastus23-tsw44   Running   Standard_D8s_v3   eastus2   3      31m
+```
 
 The infra nodes host the router/ingress pods, all the monitoring infrastrucutre, and the image registry.
