@@ -132,7 +132,6 @@ fs2021-hv0eu-worker-eastus22   1         1         1       1           35m
 fs2021-hv0eu-worker-eastus23   1         1         1       1           35m
 
 $ oc get machines -n openshift-machine-api
-NAME                                STATE     TYPE              REGION    ZONE   AGE
 NAME                                 PHASE     TYPE              REGION    ZONE   AGE
 fs2021-hv0eu-infra-eastus21-6kqlt    Running   Standard_D4s_v3   eastus2   1      31m
 fs2021-hv0eu-infra-eastus22-m826l    Running   Standard_D4s_v3   eastus2   2      31m
