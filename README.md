@@ -75,6 +75,9 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | use_ipv4                              | This determines wether your cluster will use IPv4 networking | true | bool |
 | use_ipv6                              | This determines wether your cluster will use IPv6 networking | false | bool |
 | proxy_config                          | Configuration for Cluster wide proxy | [AirGapped](AIRGAPPED.md)| map |
+| openshift_ssh_key | Path to your own SSH Public Key.  If none provided it will create one for you | - | string |
+| openshift_additional_trust_bundle | Path to your trusted CA bundle in pem format | - | string |
+| openshift_byo_dns | If set to true, we will not create Azure Public/Private DNS zones.  **You'll need to manually create `api`, `api-int` and `*.apps` DNS records** | false | bool |
 
 ## Deploy with Terraform
 
