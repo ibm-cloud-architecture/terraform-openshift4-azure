@@ -273,10 +273,27 @@ variable "airgapped" {
 variable "proxy_config" {
   type = map(string)
   default = {
-    enabled               = false
-    httpProxy             = "http://user:password@ip:port"
-    httpsProxy            = "http://user:password@ip:port"
-    noProxy               = "ip1,ip2,ip3,.example.com,cidr/mask"
-    additionalTrustBundle = "/path/to/bundle.pem" # set to "" for no additionalTrustBundle
+    enabled    = false
+    httpProxy  = "http://user:password@ip:port"
+    httpsProxy = "http://user:password@ip:port"
+    noProxy    = "ip1,ip2,ip3,.example.com,cidr/mask"
   }
+}
+
+variable "openshift_additional_trust_bundle" {
+  description = "path to a file with all your additional ca certificates"
+  type        = string
+  default     = ""
+}
+
+variable "openshift_ssh_key" {
+  description = "SSH Public Key to use for OpenShift Installation"
+  type        = string
+  default     = ""
+}
+
+variable "openshift_byo_dns" {
+  description = "Do not deploy any public or private DNS zone into Azure"
+  type        = bool
+  default     = false
 }

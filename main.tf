@@ -15,18 +15,20 @@ resource "random_string" "cluster_id" {
 
 # SSH Key for VMs
 resource "tls_private_key" "installkey" {
+  count     = var.openshift_ssh_key == "" ? 1 : 0
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "local_file" "write_private_key" {
-  content         = tls_private_key.installkey.private_key_pem
+  count           = var.openshift_ssh_key == "" ? 1 : 0
+  content         = tls_private_key.installkey[0].private_key_pem
   filename        = "${path.root}/installer-files/artifacts/openshift_rsa"
   file_permission = 0600
 }
 
 resource "local_file" "write_public_key" {
-  content         = tls_private_key.installkey.public_key_openssh
+  content         = local.public_ssh_key
   filename        = "${path.root}/installer-files/artifacts/openshift_rsa.pub"
   file_permission = 0600
 }
@@ -60,6 +62,7 @@ locals {
   azure_virtual_network             = (var.azure_preexisting_network && var.azure_virtual_network != null) ? var.azure_virtual_network : "${local.cluster_id}-vnet"
   azure_control_plane_subnet        = (var.azure_preexisting_network && var.azure_control_plane_subnet != null) ? var.azure_control_plane_subnet : "${local.cluster_id}-master-subnet"
   azure_compute_subnet              = (var.azure_preexisting_network && var.azure_compute_subnet != null) ? var.azure_compute_subnet : "${local.cluster_id}-worker-subnet"
+  public_ssh_key                    = var.openshift_ssh_key == "" ? tls_private_key.installkey[0].public_key_openssh : file(var.openshift_ssh_key)
 }
 
 module "vnet" {
@@ -97,7 +100,7 @@ module "ignition" {
   service_network_cidr          = var.openshift_service_network_cidr
   azure_dns_resource_group_name = var.azure_base_domain_resource_group_name
   openshift_pull_secret         = var.openshift_pull_secret
-  public_ssh_key                = chomp(tls_private_key.installkey.public_key_openssh)
+  public_ssh_key                = chomp(local.public_ssh_key)
   cluster_id                    = local.cluster_id
   resource_group_name           = data.azurerm_resource_group.main.name
   availability_zones            = var.azure_master_availability_zones
@@ -123,6 +126,8 @@ module "ignition" {
   outbound_udr                  = var.azure_outbound_user_defined_routing
   airgapped                     = var.airgapped
   proxy_config                  = var.proxy_config
+  trust_bundle                  = var.openshift_additional_trust_bundle
+  byo_dns                       = var.openshift_byo_dns
 }
 
 module "bootstrap" {
@@ -178,6 +183,7 @@ module "master" {
 }
 
 module "dns" {
+  count                           = var.openshift_byo_dns ? 0 : 1
   source                          = "./dns"
   cluster_domain                  = "${var.cluster_name}.${var.base_domain}"
   cluster_id                      = local.cluster_id
@@ -194,9 +200,6 @@ module "dns" {
   use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
   use_ipv6                  = var.use_ipv6
   emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
-
-  etcd_count        = var.master_count
-  etcd_ip_addresses = module.master.ip_addresses
 }
 
 resource "azurerm_resource_group" "main" {

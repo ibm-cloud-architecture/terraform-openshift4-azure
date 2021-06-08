@@ -65,9 +65,9 @@ sshKey: '${var.public_ssh_key}'
   httpProxy: ${var.proxy_config["httpProxy"]}
   httpsProxy: ${var.proxy_config["httpsProxy"]}
   noProxy: ${var.proxy_config["noProxy"]}
-%{if var.proxy_config["additionalTrustBundle"] != ""}
-${indent(2, "additionalTrustBundle: |\n${file(var.proxy_config["additionalTrustBundle"])}")}
 %{endif}
+%{if var.trust_bundle != ""}
+${indent(2, "additionalTrustBundle: |\n${file(var.trust_bundle)}")}
 %{endif}
 EOF
 }
@@ -122,10 +122,12 @@ metadata:
   name: cluster
 spec:
   baseDomain: ${var.cluster_name}.${var.base_domain}
+%{if var.byo_dns == false}
   privateZone:
     id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateDnsZones/${var.cluster_name}.${var.base_domain}
   publicZone:
     id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.azure_dns_resource_group_name}/providers/Microsoft.Network/dnszones/${var.base_domain}
+%{endif}
 status: {}
 EOF
 }
