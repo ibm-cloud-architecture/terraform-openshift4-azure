@@ -154,10 +154,19 @@ variable "airgapped" {
 variable "proxy_config" {
   type = map(string)
   default = {
-    enabled               = false
-    httpProxy             = ""
-    httpsProxy            = ""
-    noProxy               = ""
-    additionalTrustBundle = ""
+    enabled    = false
+    httpProxy  = ""
+    httpsProxy = ""
+    noProxy    = ""
   }
+}
+
+variable "trust_bundle" {
+  type    = string
+  default = ""
+}
+
+variable "byo_dns" {
+  type    = bool
+  default = false
 }

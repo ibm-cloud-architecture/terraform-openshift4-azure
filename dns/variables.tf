@@ -73,13 +73,3 @@ variable "emulate_single_stack_ipv6" {
   type        = bool
   description = "This determines whether a dual-stack cluster is configured to emulate single-stack IPv6."
 }
-variable "etcd_count" {
-  description = "The number of etcd members."
-  type        = string
-}
-
-variable "etcd_ip_addresses" {
-  description = "List of string IPs for machines running etcd members."
-  type        = list(string)
-  default     = []
-}
