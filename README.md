@@ -56,7 +56,6 @@ azure_client_secret    = "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"
 | azure_worker_root_volume_size         | Size of worker node root volume                                | 128             | string |
 | azure_infra_root_volume_size          | Size of infra node root volume                                 | 128             | string |
 | azure_master_root_volume_type         | Storage type for master root volume                            | Premium_LRS     | string |
-| azure_image_url                       | URL of the CoreOS image.                                       | [URL](https://rhcos.blob.core.windows.net/imagebucket/rhcos-46.82.202011260640-0-azure.x86_64.vhd) | string |
 | openshift_version                     | Version of OpenShift to deploy.                                | 4.6.13          | strig |
 | bootstrap_completed                   | Control variable to delete bootstrap node after initialization | false           | bool |
 | azure_private                         | If set to `true` will deploy `api` and `*.apps` endpoints as private LoadBalancers | - | bool |

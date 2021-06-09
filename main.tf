@@ -50,6 +50,13 @@ resource "local_file" "azure_sp_json" {
   filename = pathexpand("~/.azure/osServicePrincipal.json")
 }
 
+data "http" "images" {
+  url = "https://raw.githubusercontent.com/openshift/installer/release-${local.major_version}/data/data/rhcos.json"
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
 locals {
   cluster_id = "${var.cluster_name}-${random_string.cluster_id.result}"
   tags = merge(
@@ -63,6 +70,8 @@ locals {
   azure_control_plane_subnet        = (var.azure_preexisting_network && var.azure_control_plane_subnet != null) ? var.azure_control_plane_subnet : "${local.cluster_id}-master-subnet"
   azure_compute_subnet              = (var.azure_preexisting_network && var.azure_compute_subnet != null) ? var.azure_compute_subnet : "${local.cluster_id}-worker-subnet"
   public_ssh_key                    = var.openshift_ssh_key == "" ? tls_private_key.installkey[0].public_key_openssh : file(var.openshift_ssh_key)
+  major_version                     = join(".", slice(split(".", var.openshift_version), 0, 2))
+  rhcos_image                       = lookup(lookup(jsondecode(data.http.images.body), "azure"), "url")
 }
 
 module "vnet" {
@@ -262,8 +271,8 @@ resource "azurerm_storage_blob" "rhcos_image" {
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "Page"
-  source_uri             = var.azure_image_url
-  metadata               = map("source_uri", var.azure_image_url)
+  source_uri             = local.rhcos_image
+  metadata               = map("source_uri", local.rhcos_image)
 }
 
 resource "azurerm_image" "cluster" {
