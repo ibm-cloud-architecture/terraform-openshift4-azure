@@ -10,6 +10,8 @@ This [terraform](terraform.io) implementation will deploy OpenShift 4.x into an 
 
 2. [Create a Service Principal](https://github.com/openshift/installer/blob/d0f7654bc4a0cf73392371962aef68cd9552b5dd/docs/user/azure/credentials.md) with proper IAM roles
 
+3. [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
+
 ## Minimal TFVARS file
 
 ```terraform
