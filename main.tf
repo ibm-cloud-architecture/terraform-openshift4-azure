@@ -286,3 +286,19 @@ resource "azurerm_image" "cluster" {
     blob_uri = azurerm_storage_blob.rhcos_image.url
   }
 }
+
+resource "null_resource" "delete_bootstrap" {
+  depends_on = [
+    module.master
+  ]
+
+  provisioner "local-exec" {
+    command = <<EOF
+./installer-files/openshift-install --dir=./installer-files wait-for bootstrap-complete --log-level=debug
+az vm delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap -y
+az disk delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap_OSDisk -y
+az network public-ip delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap-pip-v4
+az network nic delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap-nic
+EOF    
+  }
+}
