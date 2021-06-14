@@ -26,6 +26,14 @@ output "public_lb_pip_v6_fqdn" {
   value = local.need_public_ipv6 ? data.azurerm_public_ip.cluster_public_ip_v6[0].fqdn : null
 }
 
+output "public_lb_ip_v4_address" {
+  value = local.need_public_ipv4 ? data.azurerm_public_ip.cluster_public_ip_v4[0].ip_address : null
+}
+
+output "public_lb_ip_v6_address" {
+  value = local.need_public_ipv6 ? data.azurerm_public_ip.cluster_public_ip_v6[0].ip_address : null
+}
+
 output "internal_lb_ip_v4_address" {
   value = var.use_ipv4 ? azurerm_lb.internal.private_ip_addresses[0] : null
 }

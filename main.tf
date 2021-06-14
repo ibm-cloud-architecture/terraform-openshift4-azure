@@ -15,18 +15,20 @@ resource "random_string" "cluster_id" {
 
 # SSH Key for VMs
 resource "tls_private_key" "installkey" {
+  count     = var.openshift_ssh_key == "" ? 1 : 0
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "local_file" "write_private_key" {
-  content         = tls_private_key.installkey.private_key_pem
+  count           = var.openshift_ssh_key == "" ? 1 : 0
+  content         = tls_private_key.installkey[0].private_key_pem
   filename        = "${path.root}/installer-files/artifacts/openshift_rsa"
   file_permission = 0600
 }
 
 resource "local_file" "write_public_key" {
-  content         = tls_private_key.installkey.public_key_openssh
+  content         = local.public_ssh_key
   filename        = "${path.root}/installer-files/artifacts/openshift_rsa.pub"
   file_permission = 0600
 }
@@ -48,6 +50,13 @@ resource "local_file" "azure_sp_json" {
   filename = pathexpand("~/.azure/osServicePrincipal.json")
 }
 
+data "http" "images" {
+  url = "https://raw.githubusercontent.com/openshift/installer/release-${local.major_version}/data/data/rhcos.json"
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
 locals {
   cluster_id = "${var.cluster_name}-${random_string.cluster_id.result}"
   tags = merge(
@@ -60,6 +69,9 @@ locals {
   azure_virtual_network             = (var.azure_preexisting_network && var.azure_virtual_network != null) ? var.azure_virtual_network : "${local.cluster_id}-vnet"
   azure_control_plane_subnet        = (var.azure_preexisting_network && var.azure_control_plane_subnet != null) ? var.azure_control_plane_subnet : "${local.cluster_id}-master-subnet"
   azure_compute_subnet              = (var.azure_preexisting_network && var.azure_compute_subnet != null) ? var.azure_compute_subnet : "${local.cluster_id}-worker-subnet"
+  public_ssh_key                    = var.openshift_ssh_key == "" ? tls_private_key.installkey[0].public_key_openssh : file(var.openshift_ssh_key)
+  major_version                     = join(".", slice(split(".", var.openshift_version), 0, 2))
+  rhcos_image                       = lookup(lookup(jsondecode(data.http.images.body), "azure"), "url")
 }
 
 module "vnet" {
@@ -97,7 +109,7 @@ module "ignition" {
   service_network_cidr          = var.openshift_service_network_cidr
   azure_dns_resource_group_name = var.azure_base_domain_resource_group_name
   openshift_pull_secret         = var.openshift_pull_secret
-  public_ssh_key                = chomp(tls_private_key.installkey.public_key_openssh)
+  public_ssh_key                = chomp(local.public_ssh_key)
   cluster_id                    = local.cluster_id
   resource_group_name           = data.azurerm_resource_group.main.name
   availability_zones            = var.azure_master_availability_zones
@@ -123,6 +135,8 @@ module "ignition" {
   outbound_udr                  = var.azure_outbound_user_defined_routing
   airgapped                     = var.airgapped
   proxy_config                  = var.proxy_config
+  trust_bundle                  = var.openshift_additional_trust_bundle
+  byo_dns                       = var.openshift_byo_dns
 }
 
 module "bootstrap" {
@@ -178,6 +192,7 @@ module "master" {
 }
 
 module "dns" {
+  count                           = var.openshift_byo_dns ? 0 : 1
   source                          = "./dns"
   cluster_domain                  = "${var.cluster_name}.${var.base_domain}"
   cluster_id                      = local.cluster_id
@@ -194,9 +209,6 @@ module "dns" {
   use_ipv4                  = var.use_ipv4 || var.azure_emulate_single_stack_ipv6
   use_ipv6                  = var.use_ipv6
   emulate_single_stack_ipv6 = var.azure_emulate_single_stack_ipv6
-
-  etcd_count        = var.master_count
-  etcd_ip_addresses = module.master.ip_addresses
 }
 
 resource "azurerm_resource_group" "main" {
@@ -259,8 +271,8 @@ resource "azurerm_storage_blob" "rhcos_image" {
   storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "Page"
-  source_uri             = var.azure_image_url
-  metadata               = map("source_uri", var.azure_image_url)
+  source_uri             = local.rhcos_image
+  metadata               = map("source_uri", local.rhcos_image)
 }
 
 resource "azurerm_image" "cluster" {
@@ -272,5 +284,21 @@ resource "azurerm_image" "cluster" {
     os_type  = "Linux"
     os_state = "Generalized"
     blob_uri = azurerm_storage_blob.rhcos_image.url
+  }
+}
+
+resource "null_resource" "delete_bootstrap" {
+  depends_on = [
+    module.master
+  ]
+
+  provisioner "local-exec" {
+    command = <<EOF
+./installer-files/openshift-install --dir=./installer-files wait-for bootstrap-complete --log-level=debug
+az vm delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap -y
+az disk delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap_OSDisk -y
+az network public-ip delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap-pip-v4
+az network nic delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap-nic
+EOF    
   }
 }

@@ -61,12 +61,6 @@ variable "azure_base_domain_resource_group_name" {
   description = "The resource group that contains the dns zone used as base domain for the cluster."
 }
 
-variable "azure_image_url" {
-  type        = string
-  description = "The URL of the vm image used for all nodes."
-  default     = "https://rhcos.blob.core.windows.net/imagebucket/rhcos-46.82.202011260640-0-azure.x86_64.vhd"
-}
-
 variable "azure_subscription_id" {
   type        = string
   description = "The subscription that should be used to interact with Azure API"
@@ -211,7 +205,7 @@ variable "use_ipv6" {
 
 variable "openshift_version" {
   type    = string
-  default = "4.6.13"
+  default = "4.6.31"
 }
 
 variable "openshift_pull_secret" {
@@ -273,10 +267,27 @@ variable "airgapped" {
 variable "proxy_config" {
   type = map(string)
   default = {
-    enabled               = false
-    httpProxy             = "http://user:password@ip:port"
-    httpsProxy            = "http://user:password@ip:port"
-    noProxy               = "ip1,ip2,ip3,.example.com,cidr/mask"
-    additionalTrustBundle = "/path/to/bundle.pem" # set to "" for no additionalTrustBundle
+    enabled    = false
+    httpProxy  = "http://user:password@ip:port"
+    httpsProxy = "http://user:password@ip:port"
+    noProxy    = "ip1,ip2,ip3,.example.com,cidr/mask"
   }
+}
+
+variable "openshift_additional_trust_bundle" {
+  description = "path to a file with all your additional ca certificates"
+  type        = string
+  default     = ""
+}
+
+variable "openshift_ssh_key" {
+  description = "SSH Public Key to use for OpenShift Installation"
+  type        = string
+  default     = ""
+}
+
+variable "openshift_byo_dns" {
+  description = "Do not deploy any public or private DNS zone into Azure"
+  type        = bool
+  default     = false
 }
