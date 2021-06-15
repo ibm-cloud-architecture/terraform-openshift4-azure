@@ -125,8 +125,10 @@ spec:
 %{if var.byo_dns == false}
   privateZone:
     id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateDnsZones/${var.cluster_name}.${var.base_domain}
+%{if var.private == false}
   publicZone:
     id: /subscriptions/${var.azure_subscription_id}/resourceGroups/${var.azure_dns_resource_group_name}/providers/Microsoft.Network/dnszones/${var.base_domain}
+%{endif}
 %{endif}
 status: {}
 EOF
