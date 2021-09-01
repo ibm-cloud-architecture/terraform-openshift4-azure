@@ -272,7 +272,7 @@ resource "azurerm_storage_blob" "rhcos_image" {
   storage_container_name = azurerm_storage_container.vhd.name
   type                   = "Page"
   source_uri             = local.rhcos_image
-  metadata               = tomap("source_uri", local.rhcos_image)
+  metadata               = tomap({ "source_uri" = local.rhcos_image })
 }
 
 resource "azurerm_image" "cluster" {
