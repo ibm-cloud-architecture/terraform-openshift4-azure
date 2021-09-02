@@ -297,7 +297,10 @@ resource "null_resource" "delete_bootstrap" {
 ./installer-files/openshift-install --dir=./installer-files wait-for bootstrap-complete --log-level=debug
 az vm delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap -y
 az disk delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap_OSDisk -y
-az network public-ip delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap-pip-v4
+if [[ "${var.azure_private}" == "false" ]]; then
+  az network nic ip-config update -g ${data.azurerm_resource_group.main.name} -n bootstrap-nic-ip-v4 --nic-name ${local.cluster_id}-bootstrap-nic --remove PublicIpAddress
+  az network public-ip delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap-pip-v4
+fi
 az network nic delete -g ${data.azurerm_resource_group.main.name} -n ${local.cluster_id}-bootstrap-nic
 EOF    
   }
