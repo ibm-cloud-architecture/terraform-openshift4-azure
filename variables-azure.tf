@@ -205,7 +205,7 @@ variable "use_ipv6" {
 
 variable "openshift_version" {
   type    = string
-  default = "4.6.31"
+  default = "4.12.1"
 }
 
 variable "openshift_pull_secret" {

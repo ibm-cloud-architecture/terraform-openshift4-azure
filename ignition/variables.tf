@@ -43,6 +43,11 @@ variable "openshift_installer_url" {
   default = "https://mirror.openshift.com/pub/openshift-v4/clients/ocp"
 }
 
+variable "openshift_dependencies_url" {
+  type    = string
+  default = "https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos" 
+}
+
 variable "openshift_version" {
   type    = string
   default = "latest"

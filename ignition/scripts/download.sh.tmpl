@@ -1,19 +1,19 @@
 #!/bin/bash
-
+set -xe
 test -e ${installer_workspace} || mkdir -p ${installer_workspace}
 
 case $(uname -s) in
   Darwin)
-    wget -r -l1 -np -nd -q ${installer_url} -P ${installer_workspace} -A 'openshift-install-mac-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${installer_url}/ -P ${installer_workspace} -A 'openshift-install-mac-4*.tar.gz'
     tar zxvf ${installer_workspace}/openshift-install-mac-4*.tar.gz -C ${installer_workspace}
-    wget -r -l1 -np -nd -q ${installer_url} -P ${installer_workspace} -A 'openshift-client-mac-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${installer_url}/ -P ${installer_workspace} -A 'openshift-client-mac-4*.tar.gz'
     tar zxvf ${installer_workspace}/openshift-client-mac-4*.tar.gz -C ${installer_workspace}
     wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-osx-amd64 -O ${installer_workspace}/jq > /dev/null 2>&1
     ;;
   Linux)
-    wget -r -l1 -np -nd -q ${installer_url} -P ${installer_workspace} -A 'openshift-install-linux-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${installer_url}/ -P ${installer_workspace} -A 'openshift-install-linux-4*.tar.gz'
     tar zxvf ${installer_workspace}/openshift-install-linux-4*.tar.gz -C ${installer_workspace}
-    wget -r -l1 -np -nd -q ${installer_url} -P ${installer_workspace} -A 'openshift-client-linux-4*.tar.gz'
+    wget -r -l1 -np -nd -q ${installer_url}/ -P ${installer_workspace} -A 'openshift-client-linux-4*.tar.gz'
     tar zxvf ${installer_workspace}/openshift-client-linux-4*.tar.gz -C ${installer_workspace}
     wget https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -O ${installer_workspace}/jq
     ;;

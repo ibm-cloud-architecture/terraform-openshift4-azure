@@ -1,5 +1,5 @@
 resource "azurerm_storage_account" "ignition" {
-  name                     = "ignition${local.cluster_nr}"
+  name                     = "ign${local.cluster_nr}"
   resource_group_name      = var.resource_group_name
   location                 = var.azure_region
   account_tier             = "Standard"
@@ -30,6 +30,8 @@ data "azurerm_storage_account_sas" "ignition" {
   permissions {
     read    = true
     list    = true
+    tag	    = false
+    filter  = false
     create  = false
     add     = false
     delete  = false
@@ -48,6 +50,7 @@ resource "azurerm_storage_container" "ignition" {
 locals {
   installer_workspace     = "${path.root}/installer-files/"
   openshift_installer_url = "${var.openshift_installer_url}/${var.openshift_version}"
+  dependencies_url	  = "${var.openshift_dependencies_url}/${var.openshift_version}/latest"
   cluster_nr              = join("", split("-", var.cluster_id))
 }
 
